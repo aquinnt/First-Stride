@@ -20,6 +20,7 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    
     deinit {
         if let handle { Auth.auth().removeStateDidChangeListener(handle) }
     }
