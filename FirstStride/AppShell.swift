@@ -31,7 +31,7 @@ struct AppShell: View {
         ZStack {
             // Side menu
             if showMenu {
-                SideMenu(current: $current, onSignOut: {
+                SideMenu(current: $current, showMenu: $showMenu, onSignOut: {
                     auth.signOut()
                 })
                 .transition(.move(edge: .leading))
@@ -77,6 +77,7 @@ struct AppShell: View {
 
 private struct SideMenu: View {
     @Binding var current: AppPage
+    @Binding var showMenu: Bool
     var onSignOut: () -> Void
 
     var body: some View {
@@ -87,7 +88,10 @@ private struct SideMenu: View {
 
             ForEach(AppPage.allCases) { page in
                 Button {
-                    withAnimation(.easeInOut) { current = page }
+                    withAnimation(.easeInOut) {
+                        current = page
+                        showMenu = false
+                    }
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: page.icon)
@@ -100,6 +104,9 @@ private struct SideMenu: View {
             Divider().padding(.vertical, 8)
 
             Button(role: .destructive) {
+                withAnimation(.easeInOut){
+                    showMenu = false
+                }
                 onSignOut()
             } label: {
                 HStack(spacing: 12) {
@@ -111,10 +118,10 @@ private struct SideMenu: View {
 
             Spacer()
         }
-        .padding(16)
+        .padding(.top, 24) // Push content below the Dynamic Island
+        .padding(.horizontal, 16)
         .frame(maxWidth: 240, alignment: .leading)
         .background(.ultraThickMaterial)
-        .ignoresSafeArea(edges: .vertical)
         .shadow(radius: 8)
     }
 }
