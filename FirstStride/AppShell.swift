@@ -29,14 +29,6 @@ struct AppShell: View {
 
     var body: some View {
         ZStack {
-            // Side menu
-            if showMenu {
-                SideMenu(current: $current, showMenu: $showMenu, onSignOut: {
-                    auth.signOut()
-                })
-                .transition(.move(edge: .leading))
-            }
-
             // Main content with a top bar
             NavigationStack {
                 Group {
@@ -48,7 +40,6 @@ struct AppShell: View {
                 }
                 .navigationTitle(current.rawValue)
                 .toolbar {
-                    // iOS uses .topBarLeading; macOS uses .navigation
                     #if os(iOS)
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
@@ -71,10 +62,29 @@ struct AppShell: View {
             .offset(x: showMenu ? 240 : 0)
             .disabled(showMenu)
             .animation(.easeInOut, value: showMenu)
+
+            // Dimmed overlay that captures taps to dismiss the menu
+            if showMenu {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut) { showMenu = false }
+                    }
+                    .zIndex(1)
+            }
+
+            // Side menu placed after main content and forced above with zIndex
+            if showMenu {
+                SideMenu(current: $current, showMenu: $showMenu, onSignOut: {
+                    auth.signOut()
+                })
+                .transition(.move(edge: .leading))
+                .zIndex(2)
+                .ignoresSafeArea(edges: .all)
+            }
         }
     }
 }
-
 private struct SideMenu: View {
     @Binding var current: AppPage
     @Binding var showMenu: Bool
@@ -118,7 +128,7 @@ private struct SideMenu: View {
 
             Spacer()
         }
-        .padding(.top, 24) // Push content below the Dynamic Island
+        .padding(.top, 95) // Push content below the Dynamic Island
         .padding(.horizontal, 16)
         .frame(maxWidth: 240, alignment: .leading)
         .background(.ultraThickMaterial)
