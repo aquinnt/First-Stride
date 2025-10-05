@@ -17,6 +17,7 @@ struct Workout: Identifiable {
     var type: String
     var durationMinutes: Int
     var distanceKm: Double?
+    var timed: Bool?
 }
 
 final class FirestoreService {
@@ -43,7 +44,8 @@ final class FirestoreService {
             "date": w.date, // stored as Timestamp automatically
             "type": w.type,
             "durationMinutes": w.durationMinutes,
-            "distanceKm": w.distanceKm
+            "distanceKm": w.distanceKm,
+            "timed" : w.timed
         ]
         try await workoutsCol.document(w.id).setData(data.compactMapValues { $0 })
     }
@@ -64,7 +66,8 @@ final class FirestoreService {
                 date: (d["date"] as? Timestamp)?.dateValue() ?? Date(),
                 type: d["type"] as? String ?? "",
                 durationMinutes: d["durationMinutes"] as? Int ?? 0,
-                distanceKm: d["distanceKm"] as? Double
+                distanceKm: d["distanceKm"] as? Double,
+                timed: d["timed"] as? Bool ?? false
             )
         }
     }
