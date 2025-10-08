@@ -6,9 +6,38 @@
 //
 import SwiftUI
 
+// MARK: - Helpers
+fileprivate extension DateFormatter {
+    static let monthYear: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "LLLL yyyy"
+        return f
+    }()
+    static let shortDate: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f
+    }()
+}
+
 struct DashboardView: View {
     @State private var displayDate = Date()
     @State private var selectedDate: Date? = Date()
+
+    // Single sheet enum now exposes only workout editor/popup
+    private enum ActiveSheet: Identifiable {
+        case workoutPopup(date: Date)
+        case workoutEditor(date: Date)
+
+        var id: Int {
+            switch self {
+            case .workoutPopup: return 0
+            case .workoutEditor: return 1
+            }
+        }
+    }
+    @State private var activeSheet: ActiveSheet? = nil
+
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
 
@@ -20,6 +49,28 @@ struct DashboardView: View {
             Spacer()
         }
         .padding()
+        .sheet(item: $activeSheet) { item in
+            switch item {
+            case .workoutPopup(let date):
+                WorkoutPopupView(
+                    date: date,
+                    onCreate: {
+                        activeSheet = .workoutEditor(date: date)
+                    },
+                    onLog: {
+                        activeSheet = .workoutEditor(date: date)
+                    },
+                    onCancel: {
+                        activeSheet = nil
+                    }
+                )
+            case .workoutEditor(let date):
+                WorkoutEditorView(date: date) {
+                    // Dismiss after save/cancel if needed
+                    activeSheet = nil
+                }
+            }
+        }
     }
 
     // MARK: Header
@@ -33,7 +84,12 @@ struct DashboardView: View {
                     .font(.subheadline)
             }
             Spacer()
-            Button(action: { withAnimation { displayDate = Date() } }) {
+            Button(action: {
+                withAnimation {
+                    displayDate = Date()
+                    selectedDate = Date()
+                }
+            }) {
                 Text("Today")
             }
         }
@@ -63,7 +119,7 @@ struct DashboardView: View {
                     .font(.body)
             }
             Spacer()
-            Text(monthYearString(for: displayDate))
+            Text(DateFormatter.monthYear.string(from: displayDate))
                 .font(.headline)
             Spacer()
             Button { changeMonth(by: 1) } label: {
@@ -91,6 +147,9 @@ struct DashboardView: View {
 
         return Button {
             selectedDate = date
+            if isWithinMonth {
+                activeSheet = .workoutPopup(date: date)
+            }
         } label: {
             ZStack {
                 if isSelected {
@@ -120,7 +179,7 @@ struct DashboardView: View {
                     .font(.headline)
                 Spacer()
                 if let sel = selectedDate {
-                    Text(shortDateString(for: sel))
+                    Text(DateFormatter.shortDate.string(from: sel))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
@@ -130,7 +189,6 @@ struct DashboardView: View {
                 }
             }
             Divider()
-            // Replace this with your real metrics (steps, calories, workouts)
             HStack(spacing: 12) {
                 metricBlock(title: "Workouts", value: "1")
                 metricBlock(title: "Steps", value: "4,200")
@@ -140,7 +198,6 @@ struct DashboardView: View {
         .padding()
         .background(Group {
             if #available(iOS 17.0, *) {
-                // uses new BackgroundStyle instance property
                 Color.clear.background(.background.secondary)
             } else {
                 Color(uiColor: .secondarySystemGroupedBackground)
@@ -164,68 +221,72 @@ struct DashboardView: View {
     private func changeMonth(by offset: Int) {
         if let new = calendar.date(byAdding: .month, value: offset, to: displayDate) {
             displayDate = new
+            selectedDate = nil
         }
-    }
-
-    private func monthYearString(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: date)
-    }
-
-    private func shortDateString(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
     }
 
     private func weekdaySymbols() -> [String] {
         var symbols = calendar.veryShortWeekdaySymbols
         let first = calendar.firstWeekday - 1
+        if first == 0 { return symbols }
         return Array(symbols[first...] + symbols[..<first])
     }
 
     private func monthGridDates() -> [Date] {
-        guard let monthRange = calendar.range(of: .day, in: .month, for: displayDate),
-              let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: displayDate))
-        else { return [] }
+        guard let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: displayDate)) else { return [] }
+        let weekdayOfFirst = calendar.component(.weekday, from: firstOfMonth)
+        let offset = (weekdayOfFirst - calendar.firstWeekday + 7) % 7
+        guard let firstVisible = calendar.date(byAdding: .day, value: -offset, to: firstOfMonth) else { return [] }
+        return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: firstVisible) }
+    }
+}
 
-        let firstWeekdayOfMonth = calendar.component(.weekday, from: firstOfMonth)
-        let prefixDays = (firstWeekdayOfMonth - calendar.firstWeekday + 7) % 7
+// MARK: Popup View
+struct WorkoutPopupView: View {
+    let date: Date
+    var onCreate: () -> Void
+    var onLog: () -> Void
+    var onCancel: () -> Void
 
-        // previous month's tail
-        var dates: [Date] = []
-        if prefixDays > 0 {
-            if let prevMonth = calendar.date(byAdding: .month, value: -1, to: displayDate),
-               let prevRange = calendar.range(of: .day, in: .month, for: prevMonth),
-               let prevMonthLastDay = calendar.date(from: calendar.dateComponents([.year, .month], from: prevMonth))
-            {
-                let startDay = prevRange.count - prefixDays + 1
-                for d in startDay...prevRange.count {
-                    if let date = calendar.date(byAdding: .day, value: d - 1, to: prevMonthLastDay) {
-                        dates.append(date)
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("What would you like to do?")
+                    .font(.title3)
+                    .bold()
+                Text(DateFormatter.shortDate.string(from: date))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                VStack(spacing: 12) {
+                    Button(action: onCreate) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Create Workout")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+
+
+                    Button(role: .cancel, action: onCancel) {
+                        Text("Cancel")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(.primary)
                     }
                 }
             }
+            .padding()
+            .navigationTitle("Workout")
+            .navigationBarTitleDisplayMode(.inline)
         }
-
-        // current month
-        for d in monthRange {
-            if let date = calendar.date(byAdding: .day, value: d - 1, to: firstOfMonth) {
-                dates.append(date)
-            }
-        }
-
-        // suffix to fill 6 rows (7 * 6 = 42 cells)
-        while dates.count < 42 {
-            if let next = calendar.date(byAdding: .day, value: dates.count - prefixDays, to: firstOfMonth) {
-                dates.append(next)
-            } else { break }
-        }
-
-        return dates
     }
 }
+
 
 // MARK: Preview
 struct DashboardView_Previews: PreviewProvider {
@@ -236,4 +297,3 @@ struct DashboardView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
-
