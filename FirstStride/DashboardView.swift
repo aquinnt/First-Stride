@@ -12,6 +12,7 @@ struct DashboardView: View {
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
 
+    
     var body: some View {
         VStack(spacing: 16) {
             header
@@ -236,4 +237,6 @@ struct DashboardView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
+
 

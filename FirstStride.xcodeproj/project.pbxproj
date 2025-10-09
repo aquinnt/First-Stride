@@ -34,6 +34,7 @@
 		0522149C2E85D12900D791DA /* FirstStride.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirstStride.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214AF2E85D12A00D791DA /* FirstStrideTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214B92E85D12A00D791DA /* FirstStrideUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9075E5BD2E94416B00290498 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -122,6 +123,11 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9075E5C92E94416B00290498 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,6 +243,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0522149D2E85D12900D791DA /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 9075E5C92E94416B00290498 /* Products */;
+					ProjectRef = 9075E5BD2E94416B00290498 /* FirstStride.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				0522149B2E85D12900D791DA /* FirstStride */,

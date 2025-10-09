@@ -6,6 +6,7 @@
 //
 import Foundation
 
+
 //users profile saved to firebase
 struct UserProfile: Codable, Equatable, Sendable{
     var uid: String //firebase auth id
@@ -15,5 +16,5 @@ struct UserProfile: Codable, Equatable, Sendable{
     var heightCm: Double? //same as age
     var email: String? //comes from firebase auth
     var createdAt: Date
-    var updatedAt: Date 
+    var updatedAt: Date
 }
