@@ -16,15 +16,26 @@ struct SplashView: View {
         NavigationStack {
             ZStack {
                 // Use UIKit color for iOS background
-                Color(UIColor.systemBackground).ignoresSafeArea()
+                Color(red: 1.0, green:0.6, blue: 0.6)
+                    .ignoresSafeArea()
 
-                VStack(spacing: 12) {
+                VStack(spacing: 20) {
+                    // added redefined logo to this screen alongside a formatted name
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .shadow(radius: 10)
+                        .padding()
+                    //formatted name 
                     Text("First-Stride")
-                        .font(.largeTitle).bold()
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(radius: 5)
+                        .padding()
                     ProgressView()
                 }
             }
-            .navigationDestination(isPresented: $goHome) {
+            .fullScreenCover(isPresented: $goHome) {
                 AppShell().environmentObject(auth)
             }
             .onAppear {

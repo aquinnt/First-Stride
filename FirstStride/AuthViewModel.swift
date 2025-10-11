@@ -21,7 +21,7 @@ final class AuthViewModel: ObservableObject {// handles auth logic
 
  //reg fields
     @Published var regName: String = "" //display name
-    @Published var regAge: String = ""//keep as String for textField
+    @Published var regBirthDate: Date = Date()//changeds this to date() for date birthdate 
     @Published var regWeight: String = ""//weight kg as string
     @Published var regHeight: String = ""//height cm
     @Published var regEmail: String = ""// email for sign up
@@ -65,12 +65,16 @@ final class AuthViewModel: ObservableObject {// handles auth logic
             let uid = result.user.uid
 
             //parse numeric fields safely
-            let ageVal = Int(regAge.trimmingCharacters(in: .whitespaces))
+            // allowed for calendar view for age picking
+            let calendar = Calendar.current
+            let now = Date()
+            let ageComponents = calendar.dateComponents([.year], from: regBirthDate, to: now)
+            let ageVal = ageComponents.year ?? 0
             let weightVal = Double(regWeight.trimmingCharacters(in: .whitespaces))
             let heightVal = Double(regHeight.trimmingCharacters(in: .whitespaces))
 
             //build profile model with intput
-            let now = Date()
+           
             let p = UserProfile(
                 uid: uid, //created by firebase
                 name: regName.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -142,7 +146,7 @@ final class AuthViewModel: ObservableObject {// handles auth logic
         email = ""
         password = ""
         regName = ""
-        regAge = ""
+        regBirthDate = Date()
         regWeight = ""
         regHeight = ""
         regEmail = ""

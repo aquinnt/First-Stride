@@ -18,10 +18,10 @@ struct AuthView: View {
         NavigationStack {
             VStack(spacing: 16) {
 
-                Image("Beyond Fit-01 copy")//load app logo
+                Image("logo")//load app logo
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120) // make a bit larger if you like
+                    .frame(width: 200, height: 200) // make a bit larger if you like
 
                 Text("First-Stride")
                     .font(.title2).bold()
@@ -82,7 +82,7 @@ struct AuthView: View {
                 Button("Create Account") {
                     // clears previous user for new user to sign up
                     auth.regName = ""
-                       auth.regAge = ""
+                       auth.regBirthDate = Date()// changed this to allow for register of date birthdate
                        auth.regWeight = ""
                        auth.regHeight = ""
                        auth.regEmail = ""
