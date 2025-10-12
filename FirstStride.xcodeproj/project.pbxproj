@@ -34,7 +34,8 @@
 		0522149C2E85D12900D791DA /* FirstStride.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirstStride.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214AF2E85D12A00D791DA /* FirstStrideTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214B92E85D12A00D791DA /* FirstStrideUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		9075E5BD2E94416B00290498 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
+		301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
+		3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -125,7 +126,12 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		9075E5C92E94416B00290498 /* Products */ = {
+		3018239E2E91FB6C00BD7928 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3060AF082E99E8410080D716 /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
@@ -245,8 +251,12 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 9075E5C92E94416B00290498 /* Products */;
-					ProjectRef = 9075E5BD2E94416B00290498 /* FirstStride.xcodeproj */;
+					ProductGroup = 3018239E2E91FB6C00BD7928 /* Products */;
+					ProjectRef = 301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */;
+				},
+				{
+					ProductGroup = 3060AF082E99E8410080D716 /* Products */;
+					ProjectRef = 3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -448,7 +458,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = Q6QNCXCK2C;
+				DEVELOPMENT_TEAM = B688PYRN38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -487,7 +497,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = Q6QNCXCK2C;
+				DEVELOPMENT_TEAM = B688PYRN38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;

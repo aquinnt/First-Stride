@@ -43,37 +43,50 @@ struct DashboardView: View {
 
     
     var body: some View {
-        VStack(spacing: 16) {
-            header
-            calendarCard
-            dailySummary
-            Spacer()
-        }
-        .padding()
-        .sheet(item: $activeSheet) { item in
-            switch item {
-            case .workoutPopup(let date):
-                WorkoutPopupView(
-                    date: date,
-                    onCreate: {
-                        activeSheet = .workoutEditor(date: date)
-                    },
-                    onLog: {
-                        activeSheet = .workoutEditor(date: date)
-                    },
-                    onCancel: {
+        
+            
+            VStack(spacing: 16) {
+                header
+                calendarCard
+                dailySummary
+                Spacer()
+                
+            }
+            
+            .padding()
+        //removes dashboard title and allows to make our own 
+            .navigationTitle("")
+            .navigationBarHidden(true)
+            .navigationBarBackButtonHidden(true)
+            .sheet(item: $activeSheet) { item in
+                switch item {
+                case .workoutPopup(let date):
+                    WorkoutPopupView(
+                        date: date,
+                        onCreate: {
+                            activeSheet = .workoutEditor(date: date)
+                        },
+                        onLog: {
+                            activeSheet = .workoutEditor(date: date)
+                        },
+                        onCancel: {
+                            activeSheet = nil
+                        }
+                        
+                    )
+                case .workoutEditor(let date):
+                    WorkoutEditorView(date: date) {
+                        // Dismiss after save/cancel if needed
                         activeSheet = nil
                     }
-                )
-            case .workoutEditor(let date):
-                WorkoutEditorView(date: date) {
-                    // Dismiss after save/cancel if needed
-                    activeSheet = nil
+                    
                 }
+                    
             }
-        }
+            
+        
+       
     }
-
     // MARK: Header
     private var header: some View {
         HStack {
@@ -227,7 +240,7 @@ struct DashboardView: View {
     }
 
     private func weekdaySymbols() -> [String] {
-        var symbols = calendar.veryShortWeekdaySymbols
+        let symbols = calendar.veryShortWeekdaySymbols
         let first = calendar.firstWeekday - 1
         if first == 0 { return symbols }
         return Array(symbols[first...] + symbols[..<first])

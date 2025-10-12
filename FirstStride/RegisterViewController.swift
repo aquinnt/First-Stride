@@ -17,10 +17,15 @@ struct RegisterView: View {
             Section(header: Text("About you")) {
                 TextField("Full name", text: $auth.regName)//auth object to regname
                     .textInputAutocapitalization(.words)
-
-                TextField("Age (years)", text: $auth.regAge)
-                    .keyboardType(.numberPad)
-
+                DatePicker(
+                    "Birthdate",
+                    selection: $auth.regBirthDate,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.wheel)
+                .padding()
+                
                 TextField("Weight (kg)", text: $auth.regWeight)
                     .keyboardType(.decimalPad)
 

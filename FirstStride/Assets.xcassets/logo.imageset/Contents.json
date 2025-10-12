@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "Beyond Fit-01 copy@2x 1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -11,18 +12,6 @@
           "value" : "light"
         }
       ],
-      "filename" : "Beyond Fit-01 copy@2x.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
-      "filename" : "Icon-1024pt@1x 1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -37,16 +26,7 @@
           "value" : "light"
         }
       ],
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
+      "filename" : "logo@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
@@ -59,16 +39,6 @@
         {
           "appearance" : "luminosity",
           "value" : "light"
-        }
-      ],
-      "idiom" : "universal",
-      "scale" : "3x"
-    },
-    {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
         }
       ],
       "idiom" : "universal",
