@@ -24,10 +24,10 @@ struct AuthView: View {
                     .frame(width: 200, height: 200) // make a bit larger if you like
 
                 Text("First-Stride")
-                    .font(.title2).bold()
+                    .font(.custom("Copperplate", size: 30)).bold()//change font and size //with this
                 //app name and quick message with formats
                 Text("Reach your full potential")
-                    .font(.subheadline)
+                    .font(.custom("Copperplate", size: 20))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
 
@@ -36,16 +36,18 @@ struct AuthView: View {
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
                     .textFieldStyle(.roundedBorder)
+                    .font(.custom("Copperplate", size: 15))
 
                 //password field
                 SecureField("Password", text: $auth.password)
                     .textFieldStyle(.roundedBorder)
+                    .font(.custom("Copperplate", size: 15))//font
 
                 //forgot password link
                 Button("Forgot password?") {
                     showForgot = true
                 }
-                .font(.footnote)
+                .font(.custom("Copperplate", size: 15))//font
                 .padding(.top, -6)
 
                 //error/info messages
@@ -68,6 +70,7 @@ struct AuthView: View {
                     HStack {
                         if isWorking { ProgressView().padding(.trailing, 6) }
                         Text("Sign In")
+                            .font(.custom("Copperplate", size: 15))
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -89,7 +92,7 @@ struct AuthView: View {
                        auth.regPassword = ""
                         //keeps fields empty
                     goToRegister = true
-                }
+                }.font(.custom("Copperplate", size: 15))
 
                 // Continue as Guest (anonymous)
                 Button("Continue as Guest") {
@@ -101,6 +104,7 @@ struct AuthView: View {
                         //this dismisses authview and routes to dashboard
                     }
                 }
+                .font(.custom("Copperplate", size: 15))
                 .padding(.top, 4)
 
                 Spacer()

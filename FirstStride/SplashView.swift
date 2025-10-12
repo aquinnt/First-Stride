@@ -16,24 +16,26 @@ struct SplashView: View {
         NavigationStack {
             ZStack {
                 // Use UIKit color for iOS background
-                Color(red: 1.0, green:0.6, blue: 0.6)
+                //use this to change brightness or red
+                Color(red: 1.0, green:0.3, blue: 0.3)
                     .ignoresSafeArea()
 
                 VStack(spacing: 20) {
                     // added redefined logo to this screen alongside a formatted name
-                    Image("logo")
+                    Image("whitelogo")
                         .resizable()
                         .scaledToFit()
-                        .shadow(radius: 10)
+                        
                         .padding()
                     //formatted name 
                     Text("First-Stride")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                       // .kerning(5)//playing with different fonts
+                        .font(.custom("Copperplate", size: 40)).bold()
                         .foregroundColor(.white)
-                        .shadow(radius: 5)
+                  
                         .padding()
                     ProgressView()
-                }
+                };Spacer()
             }
             .fullScreenCover(isPresented: $goHome) {
                 AppShell().environmentObject(auth)
@@ -62,4 +64,8 @@ struct SplashView: View {
             showAuth = true
         }
     }
+}
+
+#Preview {
+    SplashView()
 }
