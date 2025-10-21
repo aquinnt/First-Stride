@@ -20,7 +20,7 @@ struct SplashView: View {
                 Color(red: 1.0, green:0.3, blue: 0.3)
                     .ignoresSafeArea()
 
-                VStack(spacing: 20) {
+                VStack(spacing: 1) {
                     // added redefined logo to this screen alongside a formatted name
                     Image("whitelogo")
                         .resizable()
@@ -28,9 +28,9 @@ struct SplashView: View {
                         
                         .padding()
                     //formatted name 
-                    Text("First-Stride")
+                    Text("First Stride")
                        // .kerning(5)//playing with different fonts
-                        .font(.custom("Copperplate", size: 40)).bold()
+                        .font(.custom("SF Pro Display", size: 50)).bold()
                         .foregroundColor(.white)
                   
                         .padding()
