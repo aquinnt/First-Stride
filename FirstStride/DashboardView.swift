@@ -44,9 +44,12 @@ struct DashboardView: View {
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
 //<<<<<<< HEAD
+//<<<<<<< HEAD
 
 //=======
 //>>>>>>> a8e7cfd67c0fd4c3c507d7ec28c073eb725e0a04
+//=======
+//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
     
     var body: some View {
         ZStack {
@@ -336,6 +339,7 @@ struct DashboardView: View {
         }
     }
 //<<<<<<< HEAD
+//<<<<<<< HEAD
 //}
 
 //<<<<<<< HEAD
@@ -345,6 +349,8 @@ struct DashboardView: View {
 //=======
 //>>>>>>> 6531ae07e8ff9ddbdc671ef464e4a5c1518cdfb9
 //=======
+//=======
+//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
     
     
     // MARK: Preview
@@ -357,4 +363,7 @@ struct DashboardView: View {
         }
     }
 
+//<<<<<<< HEAD
 //>>>>>>> a8e7cfd67c0fd4c3c507d7ec28c073eb725e0a04
+//=======
+//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
