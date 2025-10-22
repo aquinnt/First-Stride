@@ -23,7 +23,7 @@ struct RegisterView: View {
                     in: ...Date(),
                     displayedComponents: .date
                 )
-                .datePickerStyle(.wheel)
+               
                 .padding()
                 
                 TextField("Weight (kg)", text: $auth.regWeight)
