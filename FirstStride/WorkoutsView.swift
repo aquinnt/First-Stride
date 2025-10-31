@@ -20,34 +20,34 @@ struct WorkoutsView: View {
 
     var body: some View {
         //Opens Menu for adding workouts - Brvnson
-        Button(action: {
-            showSheet.toggle()
-        }, label: {
-            Text("Add Workout")
-                .foregroundStyle(.white)
-                .padding()
-                .background(Color.red)
-                .cornerRadius(10)
-        })
-        .sheet(isPresented: $showSheet, content: {
-            WorkoutPopup()
-        })
+//        Button(action: {
+//            showSheet.toggle()
+//        }, label: {
+//            Text("Add Workout")
+//                .foregroundStyle(.white)
+//                .padding()
+//                .background(Color.red)
+//                .cornerRadius(10)
+//        })
+//        .sheet(isPresented: $showSheet, content: {
+//            WorkoutPopup()
+//        })
+//        
+//        //Opens Menu for adding timed workout - Brvnson
+//        Button(action: {
+//            showSheet2.toggle()
+//        }, label: {
+//            Text("Add Timed Workout")
+//                .foregroundStyle(.white)
+//                .padding()
+//                .background(Color.red)
+//                .cornerRadius(10)
+//        })
+//        .sheet(isPresented: $showSheet2, content: {
+//            TimedWorkoutPopup()
+//        })
         
-        //Opens Menu for adding timed workout - Brvnson
-        Button(action: {
-            showSheet2.toggle()
-        }, label: {
-            Text("Add Timed Workout")
-                .foregroundStyle(.white)
-                .padding()
-                .background(Color.red)
-                .cornerRadius(10)
-        })
-        .sheet(isPresented: $showSheet2, content: {
-            TimedWorkoutPopup()
-        })
-        
-        //Old workout adding menu
+        //Workout adding menu - Brvnson
         VStack(spacing: 12) {
                 Button("Refresh") {
                     Task { try? await load() }
@@ -55,10 +55,11 @@ struct WorkoutsView: View {
             
            Toggle("Timed Workout?", systemImage: "clock", isOn: $tw)
             
+            TextField("Workout", text: $wrk)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+            
             HStack{
-                TextField("Workout", text: $wrk)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
                 VStack{
                     TextField("Duration/Sets", value: $dur, format: .number)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -105,7 +106,9 @@ struct WorkoutsView: View {
             Text(status).font(.footnote).foregroundStyle(.secondary)
 
             List(workouts) { w in
-                    VStack(alignment: .leading) {
+                VStack(alignment: .leading) {
+                    if Calendar.current.isDateInToday(w.date) {
+                        
                         if w.timed == true{
                             Text("\(w.type) • \(w.durationMinutes) min")
                                 .font(.headline)
@@ -125,13 +128,14 @@ struct WorkoutsView: View {
                         Text(w.date.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption).foregroundStyle(.secondary)
                     }
+                }
             }
         }
         .padding()
         .task { try? await load() }
     }
     
-    //Sheet to add a set based workout
+    //Sheet to add a set based workout(will be repurposed DO NO DELETE) - Brvnson
     struct WorkoutPopup: View{
         @Environment(\.presentationMode) var presentationMode
         
@@ -195,7 +199,7 @@ struct WorkoutsView: View {
         }
     }
 
-    //Sheet to add a time based workout
+    //Sheet to add a time based workout(will be repurposed DO NO DELETE) - Brvnson
     struct TimedWorkoutPopup: View{
         @Environment(\.presentationMode) var presentationMode
         
