@@ -2,8 +2,6 @@
 //  WorkoutEditorView.swift
 //  FirstStride
 //
-//  Created by Matthew Eskola on 10/8/25.
-//
 
 import SwiftUI
 import FirebaseAuth
@@ -13,7 +11,7 @@ struct WorkoutEditorView: View {
     let initialDate: Date
     var onFinished: (() -> Void)? = nil
 
-    // Local editable state (pre-filled with sensible defaults)
+    // Local editable state
     @State private var date: Date
     @State private var type: String = ""
     @State private var duration: Int = 10
@@ -46,7 +44,7 @@ struct WorkoutEditorView: View {
                     HStack {
                         Text(timed ? "Duration (min)" : "Sets")
                         Spacer()
-                        Stepper("\(duration)", value: $duration, in: 1...241, step: timed ? 1 : 1)
+                        Stepper("\(duration)", value: $duration, in: 1...241, step: 1)
                             .frame(width: 141)
                     }
                     HStack {
@@ -108,6 +106,10 @@ struct WorkoutEditorView: View {
         do {
             try await store.addWorkout(w)
             status = "Saved"
+
+            // 🔔 Notify dashboard of the saved date
+            NotificationCenter.default.post(name: AppNotification.workoutSaved, object: date)
+
             onFinished?()
         } catch {
             status = "Error: \(error.localizedDescription)"

@@ -1,369 +1,298 @@
 //
-//  Dashboard.swift
+//  DashboardView.swift
 //  FirstStride
 //
-//  Created by alani quintanilla on 9/25/25.
-//
+
 import SwiftUI
-
-private let appBackground = Color(red: 1.0, green: 0.3, blue: 0.3)
-
-
-// MARK: - Helpers
-fileprivate extension DateFormatter {
-    static let monthYear: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "LLLL yyyy"
-        return f
-    }()
-    static let shortDate: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f
-    }()
-}
+import Combine
+import FirebaseAuth
+import FirebaseFirestore
 
 struct DashboardView: View {
-    @State private var displayDate = Date()
+    // Calendar + date state
+    @State private var displayDate: Date = Date()
     @State private var selectedDate: Date? = Date()
-    
-    // Single sheet enum now exposes only workout editor/popup
-    private enum ActiveSheet: Identifiable {
-        case workoutPopup(date: Date)
-        case workoutEditor(date: Date)
-        
-        var id: Int {
-            switch self {
-            case .workoutPopup: return 0
-            case .workoutEditor: return 1
-            }
-        }
-    }
-    @State private var activeSheet: ActiveSheet? = nil
-    
     private let calendar = Calendar.current
-    private let columns = Array(repeating: GridItem(.flexible()), count: 7)
-//<<<<<<< HEAD
-//<<<<<<< HEAD
 
-//=======
-//>>>>>>> a8e7cfd67c0fd4c3c507d7ec28c073eb725e0a04
-//=======
-//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
-    
+    // Dot/badge state (days with workouts)
+    @State private var workoutDays = Set<DateComponents>()     // normalized Y/M/D keys
+    private let dayUnits: Set<Calendar.Component> = [.year, .month, .day]
+
+    // Sheet presentation
+    @State private var showingEditor = false
+    @State private var editorDate = Date()
+
+    // Firebase auth listener
+    @State private var authListener: AuthStateDidChangeListenerHandle?
+
+    // App lifecycle
+    @Environment(\.scenePhase) private var scenePhase
+
+    // ---- Config: adjust if your schema differs ----
+    private let workoutsCollectionID = "workouts"   // top-level collection (matches WorkoutsView)
+    private let userIdField = "userId"              // field containing the owner's uid
+    private let dateField = "date"                  // field that stores the workout time (Firestore Timestamp)
+    private let enableDebugLogging = true          // set true to see prints in Xcode console
+    // ----------------------------------------------
+
     var body: some View {
-        ZStack {
-          
-            
-            VStack(spacing: 16) {
-                header
-                calendarCard
-                dailySummary
-                Spacer()
-                
-            }
-            
-            .padding()
-            //removes dashboard title and allows to make our own
-            .navigationTitle("")
-            .navigationBarHidden(true)
-            .navigationBarBackButtonHidden(true)
-            .sheet(item: $activeSheet) { item in
-                switch item {
-                case .workoutPopup(let date):
-                    WorkoutPopupView(
-                        date: date,
-                        onCreate: {
-                            activeSheet = .workoutEditor(date: date)
-                        },
-                        onLog: {
-                            activeSheet = .workoutEditor(date: date)
-                        },
-                        onCancel: {
-                            activeSheet = nil
-                        }
-                        
-                    )
-                case .workoutEditor(let date):
-                    WorkoutEditorView(date: date) {
-                        // Dismiss after save/cancel if needed
-                        activeSheet = nil
-                    }
-                    
-                }
-                
-            }
-            
+        VStack(spacing: 12) {
+            header
+            calendarGrid
+            Spacer(minLength: 0)
         }
-            
+        .padding()
+
+        // Load once view appears (will be a no-op if user isn't ready; listener below covers that)
+        .onAppear {
+            if enableDebugLogging { print("[Dashboard] onAppear") }
+            attachAuthListenerIfNeeded()
+            reloadDotsForCurrentMonth()
         }
-        // MARK: Header
-        private var header: some View {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing:8){
-                        Image("logo")
-                            .resizable()
-                            .renderingMode(.template)
-                            //.foregroundColor(.black)
-                            .frame(width:40, height:40)
-                        Text("Welcome to First-Stride")
-                            .font(.custom("Palatino", size: 25))
-                            //.foregroundColor(.black)//font
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            //.font(.headline)
-                    }
-                    Text("Your dashboard")
-                        .font(.custom("Palatino", size: 20))
-                           //.foregroundColor(.black)//font
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-                        //.frame(maxWidth: .infinity, alignment: .center)
-                }
-                Spacer()
-                Button(action: {
-                    withAnimation {
-                        displayDate = Date()
-                        selectedDate = Date()
-                    }
-                }) {
-                    //Text("Today")
-                        //.font(.custom("Palatino", size: 15))
-                            //.foregroundColor(.white)//font
-                }
+
+        // Detach the auth listener when leaving
+        .onDisappear {
+            if let h = authListener {
+                Auth.auth().removeStateDidChangeListener(h)
+                authListener = nil
+                if enableDebugLogging { print("[Dashboard] Removed auth listener") }
             }
         }
-        
-        // MARK: Calendar Card
-        private var calendarCard: some View {
-            VStack(spacing: 12) {
-                monthNavigation
-                weekdayHeader
-                LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(monthGridDates(), id: \.self) { date in
-                        dayCell(for: date)
-                    }
-                }
-            }
-            .padding()
-            .background(.regularMaterial)
-            .cornerRadius(12)
-            .shadow(radius: 6, y: 2)
-        }
-        
-        private var monthNavigation: some View {
-            HStack {
-                Button { changeMonth(by: -1) } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.body)
-                }
-                Spacer()
-                Text(DateFormatter.monthYear.string(from: displayDate))
-                    .font(.headline)
-                Spacer()
-                Button { changeMonth(by: 1) } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.body)
-                }
+
+        // Reload when app becomes active (e.g., after relaunch / foreground)
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                if enableDebugLogging { print("[Dashboard] App became active → reload") }
+                reloadDotsForCurrentMonth()
             }
         }
-        
-        private var weekdayHeader: some View {
-            HStack {
-                ForEach(weekdaySymbols(), id: \.self) { day in
-                    Text(day)
-                        .font(.caption2)
-                        .frame(maxWidth: .infinity)
-                        .foregroundStyle(.secondary)
-                }
+
+        // When the visible month changes, reload dots from Firestore (iOS 17+ syntax)
+        .onChange(of: displayDate) {
+            if enableDebugLogging { print("[Dashboard] displayDate changed → reload") }
+            reloadDotsForCurrentMonth()
+        }
+
+        // Live update: when an editor saves, mark the date immediately
+        .onReceive(NotificationCenter.default.publisher(for: AppNotification.workoutSaved)) { note in
+            if let savedDate = note.object as? Date {
+                if enableDebugLogging { print("[Dashboard] Received workoutSaved for \(savedDate)") }
+                markWorkout(on: savedDate)
             }
         }
-        
-        private func dayCell(for date: Date) -> some View {
-            let isWithinMonth = calendar.isDate(date, equalTo: displayDate, toGranularity: .month)
-            let isToday = calendar.isDateInToday(date)
-            let isSelected = selectedDate != nil ? calendar.isDate(selectedDate!, inSameDayAs: date) : false
-            
-            return Button {
-                selectedDate = date
-                if isWithinMonth {
-                    activeSheet = .workoutPopup(date: date)
-                }
-            } label: {
-                ZStack {
-                    if isSelected {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 36, height: 36)
-                    } else if isToday {
-                        Circle()
-                            .stroke(Color.accentColor, lineWidth: 1.5)
-                            .frame(width: 36, height: 36)
-                    }
-                    Text("\(calendar.component(.day, from: date))")
-                        .font(.callout)
-                        .foregroundColor(isWithinMonth ? (isSelected ? .white : .primary) : .secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 44)
+
+        // Present editor
+        .sheet(isPresented: $showingEditor) {
+            WorkoutEditorView(date: editorDate) {
+                showingEditor = false
             }
-            .disabled(!isWithinMonth)
-            .opacity(isWithinMonth ? 1.0 : 0.5)
         }
-        
-        // MARK: Daily Summary
-        private var dailySummary: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Daily Summary")
-                        .font(.custom("Palatino", size: 15))
-                       // .foregroundColor(.black) //font
-                        .font(.headline)
-                    Spacer()
-                    if let sel = selectedDate {
-                        Text(DateFormatter.shortDate.string(from: sel))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("No date selected")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Divider()
-                HStack(spacing: 12) {
-                    metricBlock(title: "Workouts", value: "1")
-                    metricBlock(title: "Steps", value: "4,200")
-                    metricBlock(title: "Calories", value: "480 kcal")
-                }
+    }
+}
+
+// MARK: - UI
+private extension DashboardView {
+    var header: some View {
+        HStack {
+            Button { shiftMonth(by: -1) } label: {
+                Image(systemName: "chevron.left").font(.headline)
             }
-            .font(.custom("Palatino", size: 15))
-                //.foregroundColor(.black)//font to black
-            .padding()
-            .background(Group {
-                if #available(iOS 17.0, *) {
-                    Color.clear.background(.background.secondary)
-                } else {
-                    Color(uiColor: .secondarySystemGroupedBackground)
-                }
-            })
-            .cornerRadius(12)
+            Spacer()
+            Text(monthTitle(for: displayDate))
+                .font(.headline)
+            Spacer()
+            Button { shiftMonth(by: 1) } label: {
+                Image(systemName: "chevron.right").font(.headline)
+            }
         }
-        
-        private func metricBlock(title: String, value: String) -> some View {
-            VStack {
-                Text(value)
-                    .font(.headline)
-                    //.foregroundColor(.black)//changed this
-                Text(title)
+    }
+
+    var weekdayRow: some View {
+        let symbols = calendar.shortWeekdaySymbols
+        return HStack {
+            ForEach(0..<7, id: \.self) { i in
+                Text(symbols[(i + calendar.firstWeekday - 1) % 7])
                     .font(.caption)
+                    .frame(maxWidth: .infinity)
                     .foregroundStyle(.secondary)
-                   // .foregroundColor(.black)//changed this
             }
-            .frame(maxWidth: .infinity)
-        }
-        
-        // MARK: Helpers
-        private func changeMonth(by offset: Int) {
-            if let new = calendar.date(byAdding: .month, value: offset, to: displayDate) {
-                displayDate = new
-                selectedDate = nil
-            }
-        }
-        
-        private func weekdaySymbols() -> [String] {
-            let symbols = calendar.veryShortWeekdaySymbols
-            let first = calendar.firstWeekday - 1
-            if first == 0 { return symbols }
-            return Array(symbols[first...] + symbols[..<first])
-        }
-        
-        private func monthGridDates() -> [Date] {
-            
-            guard let firstOfMonth = calendar
-                .date(from: calendar.dateComponents([.year, .month], from: displayDate)) else { return [] }
-            
-            let weekdayOfFirst = calendar
-                .component(.weekday, from: firstOfMonth)
-            let offset = (weekdayOfFirst - calendar.firstWeekday + 7) % 7
-            guard let firstVisible = calendar
-                .date(byAdding: .day, value: -offset, to: firstOfMonth) else { return [] }
-            
-            return (0..<42)
-                .compactMap { calendar.date(byAdding: .day, value: $0, to: firstVisible) }
         }
     }
 
-    // MARK: Popup View
-    struct WorkoutPopupView: View {
-        let date: Date
-        var onCreate: () -> Void
-        var onLog: () -> Void
-        var onCancel: () -> Void
-        
-        var body: some View {
-            NavigationStack {
-                VStack(spacing: 20) {
-                    Text("What would you like to do?")
-                        .font(.title3)
-                        .bold()
-                    Text(DateFormatter.shortDate.string(from: date))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    VStack(spacing: 12) {
-                        Button(action: onCreate) {
-                            HStack {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Create Workout")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                        
-                        
-                        Button(role: .cancel, action: onCancel) {
-                            Text("Cancel")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundColor(.primary)
-                        }
+    var calendarGrid: some View {
+        VStack(spacing: 6) {
+            weekdayRow
+            let days = monthDays(for: displayDate)
+            let rows = days.chunked(into: 7)
+            ForEach(0..<rows.count, id: \.self) { r in
+                HStack(spacing: 0) {
+                    ForEach(rows[r], id: \.self) { date in
+                        dayCell(for: date)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
                 }
-                .padding()
-                .navigationTitle("Workout")
-                .navigationBarTitleDisplayMode(.inline)
             }
         }
     }
-//<<<<<<< HEAD
-//<<<<<<< HEAD
-//}
 
-//<<<<<<< HEAD
+    func dayCell(for date: Date) -> some View {
+        let isWithinMonth = calendar.isDate(date, equalTo: displayDate, toGranularity: .month)
+        let isToday = calendar.isDateInToday(date)
+        let isSelected = selectedDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false
 
+        return Button {
+            selectedDate = date
+            if isWithinMonth {
+                editorDate = date
+                showingEditor = true
+            }
+        } label: {
+            ZStack {
+                if isSelected {
+                    Circle().fill(Color.accentColor).frame(width: 36, height: 36)
+                } else if isToday {
+                    Circle().stroke(Color.accentColor, lineWidth: 1.5).frame(width: 36, height: 36)
+                }
 
+                Text("\(calendar.component(.day, from: date))")
+                    .font(.callout)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundColor(isWithinMonth ? (isSelected ? .white : .primary) : .secondary)
 
-//=======
-//>>>>>>> 6531ae07e8ff9ddbdc671ef464e4a5c1518cdfb9
-//=======
-//=======
-//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
-    
-    
-    // MARK: Preview
-    struct DashboardView_Previews: PreviewProvider {
-        static var previews: some View {
-            DashboardView()
-                .preferredColorScheme(.light)
-            DashboardView()
-                .preferredColorScheme(.dark)
+                // Dot badge for saved workout
+                if hasWorkout(on: date) {
+                    Circle()
+                        .frame(width: 6, height: 6)
+                        .offset(y: 14) // under the day number
+                        .foregroundColor(isSelected ? .white : .accentColor)
+                        .accessibilityLabel("Workout scheduled")
+                }
+            }
+            .frame(height: 44)
+            .opacity(isWithinMonth ? 1.0 : 0.45)
+        }
+        .buttonStyle(.plain)
+        .disabled(!isWithinMonth)
+    }
+}
+
+// MARK: - Firestore loading (persisted dots)
+private extension DashboardView {
+    /// Attach an Auth state listener so we reload once Firebase restores the session on cold launch.
+    func attachAuthListenerIfNeeded() {
+        guard authListener == nil else { return }
+        authListener = Auth.auth().addStateDidChangeListener { _, user in
+            if enableDebugLogging { print("[Dashboard] Auth state changed. user = \(user?.uid ?? "nil")") }
+            if user != nil {
+                reloadDotsForCurrentMonth()
+            }
+        }
+        if enableDebugLogging { print("[Dashboard] Added auth listener") }
+    }
+
+    /// Triggers an async reload of dots for the current visible month.
+    func reloadDotsForCurrentMonth() {
+        Task { await loadWorkoutDots(for: displayDate) }
+    }
+
+    /// Loads workouts for the given month and marks dots accordingly.
+    /// Top-level collection (matches WorkoutsView).
+    func loadWorkoutDots(for month: Date) async {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            if enableDebugLogging { print("[Dashboard] No signed-in user; skipping load.") }
+            return
+        }
+
+        // Month range [monthStart, nextMonth)
+        guard
+            let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: month)),
+            let nextMonth  = calendar.date(byAdding: .month, value: 1, to: monthStart)
+        else { return }
+
+        do {
+            let db = Firestore.firestore()
+
+            let snap = try await db.collection(workoutsCollectionID)
+                .whereField(userIdField, isEqualTo: uid)
+                .whereField(dateField, isGreaterThanOrEqualTo: monthStart)
+                .whereField(dateField, isLessThan: nextMonth)
+                .order(by: "date", descending: false)   // ← match the ASC index
+                .getDocuments()
+
+            let dates: [Date] = snap.documents.compactMap { doc in
+                (doc.get(dateField) as? Timestamp)?.dateValue()
+            }
+
+            if enableDebugLogging {
+                let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd HH:mm"
+                print("[Dashboard] Loaded \(dates.count) workouts between \(fmt.string(from: monthStart)) and \(fmt.string(from: nextMonth))")
+            }
+
+            await MainActor.run {
+                workoutDays.removeAll()
+                for d in dates { markWorkout(on: d) }
+            }
+        } catch {
+            // If you see an index error, create a composite index on (userId ASC, date ASC).
+            print("[Dashboard] Failed to load workouts for month: \(error)")
+        }
+    }
+}
+
+// MARK: - Date helpers & dot bookkeeping
+private extension DashboardView {
+    func shiftMonth(by delta: Int) {
+        if let newDate = calendar.date(byAdding: .month, value: delta, to: displayDate) {
+            displayDate = newDate
         }
     }
 
-//<<<<<<< HEAD
-//>>>>>>> a8e7cfd67c0fd4c3c507d7ec28c073eb725e0a04
-//=======
-//>>>>>>> 748bbd938e6bad2117b38de6c3600b947726c9dd
+    func monthTitle(for date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "LLLL yyyy"
+        return fmt.string(from: date)
+    }
+
+    func monthDays(for date: Date) -> [Date] {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: date),
+              let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: monthInterval.start))
+        else { return [] }
+
+        // Start on the calendar's week start for a full grid
+        let firstWeekStart = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: firstOfMonth)
+        ) ?? firstOfMonth
+
+        // 6 weeks (42 cells) covers all months
+        return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: firstWeekStart) }
+    }
+
+    func dayKey(for date: Date) -> DateComponents {
+        calendar.dateComponents(dayUnits, from: date)
+    }
+
+    func hasWorkout(on date: Date) -> Bool {
+        workoutDays.contains(dayKey(for: date))
+    }
+
+    func markWorkout(on: Date) {
+        workoutDays.insert(dayKey(for: on))
+    }
+}
+
+// MARK: - Preview
+struct DashboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        DashboardView()
+    }
+}
+
+// MARK: - Tiny utility
+fileprivate extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        guard size > 0 else { return [self] }
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
