@@ -25,6 +25,9 @@ struct StatsView: View {
     @State private var totalRestDays = 0
     @State private var statusMessage: String = ""
     @State private var weightHistory: [WeightData] = []
+    //Brvnson - Variables for sets and reps
+    @State private var reps: Double = 0
+    @State private var sets: Int = 0
 
     private let store = FirestoreService()
 
@@ -70,6 +73,9 @@ struct StatsView: View {
                             Text("Today Workout: \(todayWorkout)")
                             Text("Max Weight Hit: \(String(format: "%.1f", maxWeight)) kg")
                             Text("Total Rest Days: \(totalRestDays)")
+                            //rep, sets, and weights lifted stats - Brvnson
+                            Text("Total Sets Completed: \(sets)")
+                            Text("Total Reps Completed: \(String(format: "%.1f", reps))")
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,6 +122,7 @@ struct StatsView: View {
             }
             
             calculateStats()
+            setAndRepStats()
             statusMessage = "Stats updated."
         } catch {
             statusMessage = "Error: \(error.localizedDescription)"
@@ -139,5 +146,18 @@ struct StatsView: View {
         })
         totalRestDays = 7 - min(7, uniqueDays.count)
     }
+    
+    //Brvnson - Set and Rep stats
+    private func setAndRepStats() {
+        let today = Calendar.current.startOfDay(for: Date())
+        let todaysWorkouts = workouts.filter {
+            Calendar.current.isDate($0.date, inSameDayAs: today)
+        }
+        
+        sets = todaysWorkouts.reduce(0) {if $1.timed == false {return $0 + $1.durationMinutes} else {return $0}}
+        reps = todaysWorkouts.reduce(0) {if $1.timed == false {return $0 + (($1.distanceKm ?? 0.0) * Double($1.durationMinutes))} else {return $0}}
+    }
 }
+
+
 
