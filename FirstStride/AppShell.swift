@@ -12,6 +12,7 @@ enum AppPage: String, CaseIterable, Identifiable {
     case workouts  = "Workouts"
     case stats     = "Stats"
     case profile   = "Profile"
+    case resources = "Resources"
 
     var id: String { rawValue }
     var icon: String {
@@ -20,6 +21,7 @@ enum AppPage: String, CaseIterable, Identifiable {
         case .workouts:  return "figure.run"
         case .stats:     return "chart.bar.fill"
         case .profile:   return "person.crop.circle"
+        case .resources: return "book.fill"
         }
     }
 }
@@ -71,6 +73,16 @@ struct AppShell: View {
                 Text(AppPage.profile.rawValue)
             }
             .tag(AppPage.profile)
+
+            NavigationStack {
+                ResourcesView()
+                    .navigationTitle(AppPage.resources.rawValue)
+            }
+            .tabItem {
+                Image(systemName: AppPage.resources.icon)
+                Text(AppPage.resources.rawValue)
+            }
+            .tag(AppPage.resources)
         }
         .accentColor(.primary)
     }
