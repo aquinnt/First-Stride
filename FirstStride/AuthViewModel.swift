@@ -1,122 +1,116 @@
-//
-//  Authentication.swift
-//  FirstStride
-//
-//  Created by alani quintanilla on 9/25/25.
-// ccontinuied by doug
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
-
 @MainActor
-final class AuthViewModel: ObservableObject {// handles auth logic
-//firebase authorization
-    @Published var user: User? = nil//firebase auth user
-    @Published var profile: UserProfile? = nil//our firestore profile
+final class AuthViewModel: ObservableObject {
 
-//login fields
-    @Published var email: String = "" //email for login
-    @Published var password: String = ""//password for login
+    // MARK: - Published Properties
+    @Published var user: User? = nil                   // Firebase auth user
+    @Published var profile: UserProfile? = nil         // Firestore profile
 
- //reg fields
-    @Published var regName: String = "" //display name
-    @Published var regBirthDate: Date = Date()//changeds this to date() for date birthdate 
-    @Published var regWeight: String = ""//weight kg as string
-    @Published var regHeight: String = ""//height cm
-    @Published var regEmail: String = ""// email for sign up
-    @Published var regPassword: String = "" //password for sign-up
+    // Login fields
+    @Published var email: String = ""
+    @Published var password: String = ""
 
-   // error and info message
-    @Published var errorMessage: String? = nil//for showing errors
-    @Published var infoMessage: String? = nil //for info notices
+    // Registration fields
+    @Published var regName: String = ""
+    @Published var regBirthDate: Date = Date()
+    @Published var regWeight: String = ""
+    @Published var regHeight: String = ""
+    @Published var regEmail: String = ""
+    @Published var regPassword: String = ""
 
+    // Error/info messages
+    @Published var errorMessage: String? = nil
+    @Published var infoMessage: String? = nil
+
+    // Firebase listener
     private var handle: AuthStateDidChangeListenerHandle?
     private let store = FirestoreService()
 
+    // MARK: - Init
     init() {
-        // this checks if user or phoen is registered and opens to dashboard if user is recognized
         handle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.user = user
                 if let uid = user?.uid {
-                    // fetch the profile if we have a user
                     self?.profile = try? await self?.store.getUserProfile(uid: uid)
                 } else {
-                    self?.profile = nil//if no profile, then profile is nill
+                    self?.profile = nil
                 }
             }
         }
     }
-// deinitialize listener when the view model is deallocated
+
     deinit {
         if let handle { Auth.auth().removeStateDidChangeListener(handle) }
     }
 
-
-    //creates a firebase auth account and writes the userProfile to firestore.
+    // MARK: - Sign Up
     func signUpWithProfile() async {
         errorMessage = nil
         infoMessage = nil
 
         do {
-            //create auth user
-            let result = try await Auth.auth().createUser(withEmail: regEmail, password: regPassword)
+            // Create auth user
+            let result = try await Auth.auth().createUser(
+                withEmail: regEmail,
+                password: regPassword
+            )
             let uid = result.user.uid
 
-            //parse numeric fields safely
-            // allowed for calendar view for age picking
+            // Calculate age
             let calendar = Calendar.current
             let now = Date()
             let ageComponents = calendar.dateComponents([.year], from: regBirthDate, to: now)
             let ageVal = ageComponents.year ?? 0
-            let weightVal = Double(regWeight.trimmingCharacters(in: .whitespaces))
-            let heightVal = Double(regHeight.trimmingCharacters(in: .whitespaces))
 
-            //build profile model with intput
-           
+            // Parse weight/height as Double
+            let weightVal = Double(regWeight.trimmingCharacters(in: .whitespaces)) ?? 0
+            let heightVal = Double(regHeight.trimmingCharacters(in: .whitespaces)) ?? 0
+
+            // Build user profile
             let p = UserProfile(
-                uid: uid, //created by firebase
+                uid: uid,
                 name: regName.trimmingCharacters(in: .whitespacesAndNewlines),
                 age: ageVal,
-                weightKg: weightVal,//will figure out how to convert to freedom units in next sprint
+                weightKg: weightVal,
                 heightCm: heightVal,
-                email: result.user.email,//firebase allocated user
+                email: result.user.email,
                 createdAt: now,
                 updatedAt: now
             )
 
-            //store to firestore
+            // Save profile
             try await store.setUserProfile(p)
-
-            // keep local state in sync
             profile = p
 
-            // set displayName on the auth user
+            // Set Firebase Auth display name
             let change = result.user.createProfileChangeRequest()
             change.displayName = p.name
             try await change.commitChanges()
-            //notify the user
-            infoMessage = "Account created!"
-        } catch {//else, show error message with description
-            errorMessage = error.localizedDescription
-        }
-    }
 
-    //signs in with email/password.
-    func signIn() async {
-        errorMessage = nil//these clear previopus messages
-        infoMessage = nil
-        do {
-            _ = try await Auth.auth().signIn(withEmail: email, password: password)//verifies against firebase
+            infoMessage = "Account created!"
+
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    //anonymous sign-in for guests
+    // MARK: - Login
+    func signIn() async {
+        errorMessage = nil
+        infoMessage = nil
+        do {
+            _ = try await Auth.auth().signIn(withEmail: email, password: password)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Anonymous Login
     func signInAnonymously() async {
-        //creates anonymous user
         errorMessage = nil
         infoMessage = nil
         do {
@@ -126,21 +120,39 @@ final class AuthViewModel: ObservableObject {// handles auth logic
         }
     }
 
-    //send password to email for reset
+    // MARK: - Password Reset Email
     func sendPasswordReset(email: String) async {
         errorMessage = nil
         infoMessage = nil
         do {
-            try await Auth.auth().sendPasswordReset(withEmail: email)//allows firebase to send email to user for password reset
+            try await Auth.auth().sendPasswordReset(withEmail: email)
             infoMessage = "Password reset email sent."
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    //sign out and clear user fields
+    // MARK: - Change Password  🔹 (Your New Feature)
+    func changePassword(to newPassword: String) async {
+        errorMessage = nil
+        infoMessage = nil
+
+        guard let user = Auth.auth().currentUser else {
+            errorMessage = "No user is currently signed in."
+            return
+        }
+
+        do {
+            try await user.updatePassword(to: newPassword)
+            infoMessage = "Password updated successfully."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Sign Out
     func signOut() {
-        try? Auth.auth().signOut()//signs out firebase user
+        try? Auth.auth().signOut()
         user = nil
         profile = nil
         email = ""
@@ -151,6 +163,5 @@ final class AuthViewModel: ObservableObject {// handles auth logic
         regHeight = ""
         regEmail = ""
         regPassword = ""
-    
     }
 }

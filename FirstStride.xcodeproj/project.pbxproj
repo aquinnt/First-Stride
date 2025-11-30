@@ -11,6 +11,7 @@
 		05D5FD3B2E85D62A007C915B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 05D5FD3A2E85D62A007C915B /* FirebaseAuth */; };
 		05FD85B62E85E3F80055CAC7 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 05FD85B52E85E3F80055CAC7 /* FirebaseFirestore */; };
 		05FD85B82E85E4700055CAC7 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 05FD85B72E85E4700055CAC7 /* FirebaseFirestoreCombine-Community */; };
+		90222DD92EDA737200F5F2F2 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 90222DD82EDA737200F5F2F2 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,24 +35,13 @@
 		0522149C2E85D12900D791DA /* FirstStride.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirstStride.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214AF2E85D12A00D791DA /* FirstStrideTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214B92E85D12A00D791DA /* FirstStrideUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
+		3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		05FD85CD2E85EAB90055CAC7 /* Exceptions for "FirstStride" folder in "FirstStride" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Untitled.swift,
-			);
-			target = 0522149B2E85D12900D791DA /* FirstStride */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0522149E2E85D12900D791DA /* FirstStride */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				05FD85CD2E85EAB90055CAC7 /* Exceptions for "FirstStride" folder in "FirstStride" target */,
-			);
 			path = FirstStride;
 			sourceTree = "<group>";
 		};
@@ -75,6 +65,7 @@
 				05D5FD392E85D62A007C915B /* FirebaseAnalytics in Frameworks */,
 				05FD85B82E85E4700055CAC7 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				05D5FD3B2E85D62A007C915B /* FirebaseAuth in Frameworks */,
+				90222DD92EDA737200F5F2F2 /* FirebaseStorage in Frameworks */,
 				05FD85B62E85E3F80055CAC7 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -124,6 +115,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		3018239E2E91FB6C00BD7928 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3060AF082E99E8410080D716 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -148,6 +149,7 @@
 				05D5FD3A2E85D62A007C915B /* FirebaseAuth */,
 				05FD85B52E85E3F80055CAC7 /* FirebaseFirestore */,
 				05FD85B72E85E4700055CAC7 /* FirebaseFirestoreCombine-Community */,
+				90222DD82EDA737200F5F2F2 /* FirebaseStorage */,
 			);
 			productName = FirstStride;
 			productReference = 0522149C2E85D12900D791DA /* FirstStride.app */;
@@ -237,6 +239,16 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0522149D2E85D12900D791DA /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 3018239E2E91FB6C00BD7928 /* Products */;
+					ProjectRef = 301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */;
+				},
+				{
+					ProductGroup = 3060AF082E99E8410080D716 /* Products */;
+					ProjectRef = 3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				0522149B2E85D12900D791DA /* FirstStride */,
@@ -436,7 +448,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = Q6QNCXCK2C;
+				DEVELOPMENT_TEAM = B688PYRN38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -475,7 +487,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = Q6QNCXCK2C;
+				DEVELOPMENT_TEAM = B688PYRN38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -662,6 +674,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 05D5FD372E85D62A007C915B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		90222DD82EDA737200F5F2F2 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05D5FD372E85D62A007C915B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

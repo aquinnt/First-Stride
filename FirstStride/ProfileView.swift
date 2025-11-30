@@ -4,97 +4,275 @@
 //
 //  Created by alani quintanilla on 9/25/25.
 //
+
 import SwiftUI
 import PhotosUI
 import FirebaseAuth
+import FirebaseCore
+import FirebaseFirestore
+import FirebaseStorage
+import UIKit
+
+enum ApperanceStyle {
+    case lbs
+    case kg
+}
+
+enum ApperanceStyle2 {
+    case mile
+    case kilometer
+}
+
+
+struct menuAndButtonApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
 
 struct ProfileView: View {
     var signOutAction: (() -> Void)? = nil
+    @EnvironmentObject var authVM: AuthViewModel
 
+    // ACCOUNT / STATE
+    @State private var changePswd: String = ""
     @State private var showingSignOutConfirm = false
     @State private var isSigningOut = false
     @State private var signOutError: String?
-    @State private var avatarImage: UIImage?
-    @State private var photoPickerItem: PhotosPickerItem?
-    @State private var showSheet = false
-    
-    @State private var profileOptList = [
-        ProfileOptions(title: "Account Details", description: "View Account Details"),
-        ProfileOptions(title: "Measuerments", description: "Change body measuerments"),
-        ProfileOptions(title: "Mange Friends", description: "Mange Your Friends"),
-        ProfileOptions(title: "Units of Weight", description: "Chnage the units of Weight Kg, lb")
-    ]
+    @State private var shouldShowImagePicker = false
+    @State private var AccountDetailPresented = false
+    @State private var StatsDetailsPresented = false
+    @State private var ChangePasscodePresented = false
+    @State private var manageFriendPresented = false
     @State private var selectedOption: ProfileOptions? = nil
     @State private var isEditing = false
+    @State private var apperance: ApperanceStyle = .kg
+    @State private var apperance2: ApperanceStyle2 = .kilometer
+    @State private var image: UIImage?
+    @State private var isUploading = false
+    private let imageService = ImageStorageService.shared
+
     
     var body: some View {
         VStack(spacing: 12) {
             if let u = Auth.auth().currentUser {
-                
-                Text("Profile")
-                    .font(.headline)
-                //Text(u.uid).font(.footnote).textSelection(.enabled)
-                if let userName = u.email {Text(userName)}
-                if u.isAnonymous { Text("Signed in as Guest").foregroundStyle(.secondary) }
-                
-                HStack() {
-                    
-                    PhotosPicker(selection: $photoPickerItem, matching: .images) {
-                        Image(uiImage: avatarImage ?? UIImage(resource: .defaultAvatar))
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 200, height: 200)
-                            .clipShape(.circle)
-                    }
+
+                if u.isAnonymous {
+                    Text("Signed in as Guest")
+                        .foregroundStyle(.secondary)
                 }
-                
-                NavigationView{
-                    List{
-                        Section(header: Text("Account Details")){
-                            ForEach(profileOptList){ option in
-                                HStack{
-                                    VStack(alignment: .leading){
-                                        Text(option.title)
-                                            .font(.headline)
-                                        Text(option.description)
-                                            .font(.headline)
-                                            .foregroundColor(.gray)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedOption = option
-                                    isEditing = true
-                                }
+
+                //Allows user to choose and set profile picture
+                HStack {
+                    Button {
+                        shouldShowImagePicker.toggle()
+                    } label: {
+                        VStack {
+                            if let image = self.image {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 128, height: 128)
+                                    .cornerRadius(64)
+                            } else {
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 64))
+                                    .padding()
+                                    .foregroundColor(Color(.label))
+                            }
+
+                            if isUploading {
+                                ProgressView("Uploading…")
+                                    .font(.caption)
+                                    .padding(.top, 4)
                             }
                         }
-                   }
-                    .listStyle(InsetGroupedListStyle())
-                    .navigationTitle("Profile")
-                    .sheet(isPresented: $isEditing){
-                        if let selectedOption = selectedOption,
-                           let index = profileOptList.firstIndex(where: { $0.id == selectedOption.id}){
-                            EditProfileSheet(
-                                option: $profileOptList[index],
-                                isPresented: $isEditing
-                            )
-                        }
                     }
                 }
 
+                // Main profile content
+                NavigationView {
+                    List {
+                        
+                        Section {
+                            // Account details sheet
+                            Button("Account Detail ") {
+                                AccountDetailPresented = true
+                            }
+                            .sheet(isPresented: $AccountDetailPresented) {
+                                if let userEmail = u.email {
+                                    NavigationView {
+                                        VStack {
+                                            List {
+                                                Section(header: Text("Name").font(.headline)) {
+                                                    if let profile = authVM.profile {
+                                                        Text(profile.name)
+                                                    }
+                                                }
+                                            }
+                                            List {
+                                                Section(header: Text("Email").font(.headline)) {
+                                                    Text(userEmail)
+                                                }
+                                            }
+                                            List {
+                                                Section(header: Text("UID").font(.headline)) {
+                                                    Text(u.uid)
+                                                }
+                                            }
+                                            Spacer()
+                                                .padding()
 
+                                            Button("Close") {
+                                                AccountDetailPresented = false
+                                            }
+                                        }
+                                        .navigationTitle("Account Details")
+                                    }
+                                }
+                            }
+
+                            // Body stats sheet
+                            Button("Body Stats ") {
+                                StatsDetailsPresented = true
+                            }
+                            .sheet(isPresented: $StatsDetailsPresented) {
+                                NavigationView {
+                                    VStack {
+                                        List {
+                                            Section(header: Text("Height and Weight").font(.headline)) {
+                                                Text("Height:")
+                                                Text("Weight:")
+                                            }
+                                        }
+                                        Spacer()
+                                            .padding()
+                                        Button("Close") {
+                                            StatsDetailsPresented = false
+                                        }
+                                    }
+                                    .navigationTitle("Body Stats")
+                                }
+                            }
+
+                            
+                            Button("Change Password ") {
+                                ChangePasscodePresented = true
+                            }
+                            .sheet(isPresented: $ChangePasscodePresented) {
+                                NavigationView {
+                                    VStack {
+                                        List {
+                                            Section(header: Text("New Password")) {
+                                                SecureField("New password", text: $changePswd)
+                                            }
+                                        }
+
+                                        // show authVM messages (optional)
+                                        if let error = authVM.errorMessage {
+                                            Text(error)
+                                                .foregroundColor(.red)
+                                                .multilineTextAlignment(.center)
+                                                .padding(.horizontal)
+                                        }
+
+                                        if let info = authVM.infoMessage {
+                                            Text(info)
+                                                .foregroundColor(.green)
+                                                .multilineTextAlignment(.center)
+                                                .padding(.horizontal)
+                                        }
+
+                                        Spacer()
+
+                                        Button("Update Password") {
+                                            Task {
+                                                await authVM.changePassword(to: changePswd)
+                                                if authVM.errorMessage == nil {
+                                                    ChangePasscodePresented = false
+                                                    changePswd = ""
+                                                }
+                                            }
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .padding(.bottom)
+
+                                        Button("Close") {
+                                            ChangePasscodePresented = false
+                                            changePswd = ""
+                                        }
+                                        .padding(.bottom)
+                                    }
+                                    .navigationTitle("Change Password")
+                                }
+                            }
+
+                        } header: {
+                            Text("Account")
+                        }
+
+                        
+                        Section {
+                            Button("Manage Friends") {
+                                manageFriendPresented = true
+                            }
+                            .sheet(isPresented: $manageFriendPresented) {
+                                NavigationView {
+                                    VStack {
+                                        List {
+                                            Section(header: Text("Friends").font(.headline)) {
+                                                Text("Alani")
+                                                Text("Andrew")
+                                                Text("Doug")
+                                                Text("Mathew")
+                                                Text("Reni")
+                                                Text("Tobi")
+                                                Text("Eliceo")
+                                            }
+                                        }
+                                        Spacer()
+                                        Button("Close") {
+                                            manageFriendPresented = false
+                                        }
+                                    }
+                                    .navigationTitle("Friends")
+                                }
+                            }
+                        } header: {
+                            Text("Social")
+                        }
+
+                        
+                        Section {
+                            Picker("Change Units of Weight", selection: $apperance) {
+                                Text("Lbs").tag(ApperanceStyle.lbs)
+                                Text("Kg").tag(ApperanceStyle.kg)
+                            }
+
+                            Picker("Change units of Distance", selection: $apperance2) {
+                                Text("Miles").tag(ApperanceStyle2.mile)
+                                Text("Kilometers").tag(ApperanceStyle2.kilometer)
+                            }
+
+                        } header: {
+                            Text("Units of Measurements")
+                        }
+                    }
+                }
 
                 Spacer()
 
+                
                 if let error = signOutError {
-                    Text(error).foregroundColor(.red).multilineTextAlignment(.center).padding(.horizontal)
+                    Text(error)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
-                
-                
 
+                // Sign Out button
                 Button(role: .destructive) {
                     showingSignOutConfirm = true
                 } label: {
@@ -109,7 +287,11 @@ struct ProfileView: View {
                 }
                 .disabled(isSigningOut)
                 .padding(.horizontal)
-                .confirmationDialog("Are you sure you want to sign out?", isPresented: $showingSignOutConfirm, titleVisibility: .visible) {
+                .confirmationDialog(
+                    "Are you sure you want to sign out?",
+                    isPresented: $showingSignOutConfirm,
+                    titleVisibility: .visible
+                ) {
                     Button("Sign Out", role: .destructive) {
                         performSignOut()
                     }
@@ -117,7 +299,8 @@ struct ProfileView: View {
                 }
 
                 if isSigningOut {
-                    ProgressView("Signing out...").padding(.top)
+                    ProgressView("Signing out...")
+                        .padding(.top)
                 }
             } else {
                 Text("Not signed in")
@@ -125,31 +308,41 @@ struct ProfileView: View {
             }
         }
         .padding()
-        .onChange(of: photoPickerItem){_,_ in
+        .fullScreenCover(isPresented: $shouldShowImagePicker) {
+            ImagePicker(image: $image)
+        }
+        .onChange(of: image) { newImage in
+            guard let newImage else { return }
+
+            isUploading = true
+
             Task {
-                if let photoPickerItem,
-                    let data = try? await photoPickerItem.loadTransferable(type: Data.self){
-                    if let image = UIImage(data: data){
-                        avatarImage = image
-                    }
+                do {
+                    try await imageService.uploadProfileImage(newImage)
+                    print("Profile image uploaded")
+                } catch {
+                    print("Failed to save image: \(error.localizedDescription)")
                 }
-                photoPickerItem = nil
+                isUploading = false
             }
         }
+        .onAppear {
+            loadProfileImage()
+        }
     }
+
+   
 
     private func performSignOut() {
         isSigningOut = true
         signOutError = nil
 
-        // If a closure was provided by the parent, call it so parent handles sign-out.
         if let action = signOutAction {
             action()
             finishSignOut()
             return
         }
 
-        // Otherwise, fall back to Firebase sign out directly.
         do {
             try Auth.auth().signOut()
             finishSignOut()
@@ -159,64 +352,48 @@ struct ProfileView: View {
         }
     }
 
-    
     private func finishSignOut() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             isSigningOut = false
         }
     }
+
+
+    private func loadProfileImage() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        let db = Firestore.firestore()
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
+                print("Error loading profile doc: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let urlString = data["photoURL"] as? String,
+                  let url = URL(string: urlString) else {
+                // no photoURL set yet
+                return
+            }
+
+            URLSession.shared.dataTask(with: url) { data, _, error in
+                if let error = error {
+                    print("Error downloading image: \(error.localizedDescription)")
+                    return
+                }
+
+                if let data = data, let downloadedImage = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self.image = downloadedImage
+                    }
+                }
+            }.resume()
+        }
+    }
 }
 
-
-
-
-struct ProfileOptions: Identifiable{
+struct ProfileOptions: Identifiable {
     let id = UUID()
     var title: String
     var description: String
-}
-
-
-struct OptionDetailView: View {
-    let option: ProfileOptions
-    
-    var body: some View{
-        Text(option.title)
-            .font(.largeTitle)
-        Text(option.description)
-            .font(.body)
-    }
-    
-}
-
-
-struct EditProfileSheet: View{
-    
-    @Binding var option: ProfileOptions
-    @Binding var isPresented: Bool
-    
-    var body: some View{
-        NavigationView{
-            Form {
-                Section(header: Text("Edit")){
-                    TextField("Title", text: $option.title)
-                    TextField("Title", text: $option.description)
-                }
-            }
-            .navigationTitle("Edit Option")
-            .toolbar{
-                ToolbarItem(placement: .confirmationAction){
-                    Button("Done"){
-                        isPresented = false
-                    }
-                }
-                ToolbarItem(placement: .cancellationAction){
-                    Button("Cancel"){
-                        isPresented = false
-
-            }
-                }
-            }
-        }
-    }
 }
