@@ -34,8 +34,6 @@
 		0522149C2E85D12900D791DA /* FirstStride.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirstStride.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214AF2E85D12A00D791DA /* FirstStrideTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		052214B92E85D12A00D791DA /* FirstStrideUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstStrideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
-		3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FirstStride.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -124,16 +122,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		3018239E2E91FB6C00BD7928 /* Products */ = {
-			isa = PBXGroup;
-			name = Products;
-			sourceTree = "<group>";
-		};
-		3060AF082E99E8410080D716 /* Products */ = {
-			isa = PBXGroup;
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -249,16 +237,6 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0522149D2E85D12900D791DA /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 3018239E2E91FB6C00BD7928 /* Products */;
-					ProjectRef = 301823932E91FB6C00BD7928 /* FirstStride.xcodeproj */;
-				},
-				{
-					ProductGroup = 3060AF082E99E8410080D716 /* Products */;
-					ProjectRef = 3060AEFB2E99E8410080D716 /* FirstStride.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				0522149B2E85D12900D791DA /* FirstStride */,
@@ -458,7 +436,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = B688PYRN38;
+				DEVELOPMENT_TEAM = Q6QNCXCK2C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -497,7 +475,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"FirstStride/Preview Content\"";
-				DEVELOPMENT_TEAM = B688PYRN38;
+				DEVELOPMENT_TEAM = Q6QNCXCK2C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
