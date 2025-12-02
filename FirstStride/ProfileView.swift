@@ -652,3 +652,8 @@ func saveWeightEntry(newWeight: Double) async throws {
             "date": entry.date
         ])
 }
+struct WeightEntry: Identifiable, Codable {
+    let id: String
+    let weight: Double
+    let date: Date
+}
