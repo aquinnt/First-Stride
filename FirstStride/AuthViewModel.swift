@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import SwiftUI
 
 @MainActor
 final class AuthViewModel: ObservableObject {
@@ -32,8 +33,12 @@ final class AuthViewModel: ObservableObject {
         handle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.user = user
+
                 if let uid = user?.uid {
-                    self?.profile = try? await self?.store.getUserProfile(uid: uid)
+                    // Load Firestore profile CORRECTLY
+                    if let loadedProfile = try? await self?.store.getUserProfile(uid: uid) {
+                        self?.profile = loadedProfile
+                    }
                 } else {
                     self?.profile = nil
                 }
@@ -76,7 +81,10 @@ final class AuthViewModel: ObservableObject {
                 heightCm: heightVal,
                 email: result.user.email,
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now, birthday: regBirthDate
+
+                
+                
             )
 
             // Save profile

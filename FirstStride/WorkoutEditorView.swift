@@ -74,10 +74,10 @@ struct WorkoutEditorView: View {
                     }
                 }
                 
-                Section{
-                    //Creates a button to edit each workout on given day - Brvnson
-                    HStack{
+                Section {
+                    VStack {
                         Spacer()
+
                         ForEach(
                             Workouts.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
                         ) { W in
@@ -89,18 +89,46 @@ struct WorkoutEditorView: View {
                                 timed = W.timed ?? false
                                 edit = true
                             } label: {
+
+                                // --- DISPLAY WORKOUT INFO ---
                                 HStack {
-                                    Text(W.type)
-                                        .padding(5)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        // Workout title
+                                        Text(W.type)
+                                            .font(.headline)
+
+                                        // TIMED WORKOUTS (duration + distance km)
+                                        if W.timed == true {
+                                            Text("\(W.durationMinutes) min")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+
+                                            if let d = W.distanceKm {
+                                                Text("\(String(format: "%.1f", d)) km")
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.secondary)
+                                            }
+
+                                        // NON-TIMED (sets × reps)
+                                        } else {
+                                            let reps = Int(W.distanceKm ?? 0.0)
+                                            Text("\(W.durationMinutes) sets × \(reps) reps")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+
+                                    Spacer()
                                 }
+                                .padding(5)
                             }
                             .buttonStyle(.plain)
                         }
 
                     }
-                    .task {try? await load()}
+                    .task { try? await load() }
                 }
-                
+
                 
                 if !status.isEmpty {
                     Section {

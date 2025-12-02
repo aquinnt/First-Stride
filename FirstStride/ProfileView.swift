@@ -5,52 +5,66 @@
 //  Created by alani quintanilla on 9/25/25.
 //
 
+
 import SwiftUI
 import PhotosUI
 import FirebaseAuth
-import FirebaseCore
 import FirebaseFirestore
 import FirebaseStorage
 import UIKit
 
+struct Friend: Identifiable, Codable {
+    let id: String
+    let name: String
+}
+
+// Weight units
 enum ApperanceStyle {
     case lbs
     case kg
 }
 
+// Height units (your code uses .mile as inches)
 enum ApperanceStyle2 {
     case mile
-    case kilometer
-}
-
-
-struct menuAndButtonApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-    }
+    case centimeter
 }
 
 struct ProfileView: View {
     var signOutAction: (() -> Void)? = nil
     @EnvironmentObject var authVM: AuthViewModel
+
+
+
+    // Main State
+
     @State private var changePswd: String = ""
     @State private var showingSignOutConfirm = false
     @State private var isSigningOut = false
     @State private var signOutError: String?
     @State private var shouldShowImagePicker = false
+
+    // Sheet Visibility
     @State private var AccountDetailPresented = false
     @State private var StatsDetailsPresented = false
     @State private var ChangePasscodePresented = false
     @State private var manageFriendPresented = false
-    @State private var selectedOption: ProfileOptions? = nil
-    @State private var isEditing = false
+
+    // Units
     @State private var apperance: ApperanceStyle = .kg
-    @State private var apperance2: ApperanceStyle2 = .kilometer
+    @State private var apperance2: ApperanceStyle2 = .centimeter
+
+    // Profile Editing State
+    @State private var editedName: String = ""
+    @State private var editedHeight: String = ""
+    @State private var editedWeight: String = ""
+
+    // Image
     @State private var image: UIImage?
     @State private var isUploading = false
     private let imageService = ImageStorageService.shared
+    @State private var friends: [Friend] = []
+    @State private var newFriendName: String = ""
 
     
     
@@ -103,12 +117,12 @@ struct ProfileView: View {
     var body: some View {
         VStack(spacing: 12) {
             if let u = Auth.auth().currentUser {
-
+                
                 if u.isAnonymous {
                     Text("Signed in as Guest")
                         .foregroundStyle(.secondary)
                 }
-
+                
                 //Allows user to choose and set profile picture
                 HStack {
                     Button {
@@ -127,7 +141,7 @@ struct ProfileView: View {
                                     .padding()
                                     .foregroundColor(Color(.label))
                             }
-
+                            
                             if isUploading {
                                 ProgressView("Uploading…")
                                     .font(.caption)
@@ -136,7 +150,7 @@ struct ProfileView: View {
                         }
                     }
                 }
-
+                
                 
                 NavigationView {
                     List {
@@ -169,7 +183,7 @@ struct ProfileView: View {
                                             }
                                             Spacer()
                                                 .padding()
-
+                                            
                                             Button("Close") {
                                                 AccountDetailPresented = false
                                             }
@@ -178,7 +192,7 @@ struct ProfileView: View {
                                     }
                                 }
                             }
-
+                            
                             // Body stats sheet
                             Button("Body Stats ") {
                                 StatsDetailsPresented = true
@@ -190,7 +204,7 @@ struct ProfileView: View {
                                             Section(header: Text("Height(cm) and Weight(kg)").font(.headline)) {
                                                 Text("Height: \(heightText)")
                                                 Text("Weight: \(weightText)")
-
+                                                
                                             }
                                         }
                                         Spacer()
@@ -202,7 +216,7 @@ struct ProfileView: View {
                                     .navigationTitle("Body Stats")
                                 }
                             }
-
+                            
                             
                             Button("Change Password ") {
                                 ChangePasscodePresented = true
@@ -215,7 +229,7 @@ struct ProfileView: View {
                                                 SecureField("New password", text: $changePswd)
                                             }
                                         }
-
+                                        
                                         // show authVM messages (optional)
                                         if let error = authVM.errorMessage {
                                             Text(error)
@@ -223,16 +237,16 @@ struct ProfileView: View {
                                                 .multilineTextAlignment(.center)
                                                 .padding(.horizontal)
                                         }
-
+                                        
                                         if let info = authVM.infoMessage {
                                             Text(info)
                                                 .foregroundColor(.green)
                                                 .multilineTextAlignment(.center)
                                                 .padding(.horizontal)
                                         }
-
+                                        
                                         Spacer()
-
+                                        
                                         Button("Update Password") {
                                             Task {
                                                 await authVM.changePassword(to: changePswd)
@@ -244,7 +258,7 @@ struct ProfileView: View {
                                         }
                                         .buttonStyle(.borderedProminent)
                                         .padding(.bottom)
-
+                                        
                                         Button("Close") {
                                             ChangePasscodePresented = false
                                             changePswd = ""
@@ -254,11 +268,11 @@ struct ProfileView: View {
                                     .navigationTitle("Change Password")
                                 }
                             }
-
+                            
                         } header: {
                             Text("Account")
                         }
-
+                        
                         
                         Section {
                             Button("Manage Friends") {
@@ -289,27 +303,27 @@ struct ProfileView: View {
                         } header: {
                             Text("Social")
                         }
-
+                        
                         
                         Section {
                             Picker("Change Units of Weight", selection: $apperance) {
                                 Text("Lbs").tag(ApperanceStyle.lbs)
                                 Text("Kg").tag(ApperanceStyle.kg)
                             }
-
+                            
                             Picker("Change units of Distance", selection: $apperance2) {
                                 Text("Miles").tag(ApperanceStyle2.mile)
                                 Text("Kilometers").tag(ApperanceStyle2.kilometer)
                             }
-
+                            
                         } header: {
                             Text("Units of Measurements")
                         }
                     }
                 }
-
+                
                 Spacer()
-
+                
                 
                 if let error = signOutError {
                     Text(error)
@@ -317,7 +331,7 @@ struct ProfileView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
-
+                
                 // Sign Out button
                 Button(role: .destructive) {
                     showingSignOutConfirm = true
@@ -332,114 +346,594 @@ struct ProfileView: View {
                     .cornerRadius(8)
                 }
                 .disabled(isSigningOut)
-                .padding(.horizontal)
-                .confirmationDialog(
-                    "Are you sure you want to sign out?",
-                    isPresented: $showingSignOutConfirm,
-                    titleVisibility: .visible
-                ) {
-                    Button("Sign Out", role: .destructive) {
-                        performSignOut()
-                    }
-                    Button("Cancel", role: .cancel) { }
-                }
-
-                if isSigningOut {
-                    ProgressView("Signing out...")
-                        .padding(.top)
-                }
-            } else {
-                Text("Not signed in")
-                Spacer()
-            }
-        }
-        .padding()
-        .fullScreenCover(isPresented: $shouldShowImagePicker) {
-            ImagePicker(image: $image)
-        }
-        .onChange(of: image) { newImage in
-            guard let newImage else { return }
-
-            isUploading = true
-
-            Task {
-                do {
-                    try await imageService.uploadProfileImage(newImage)
-                    print("Profile image uploaded")
-                } catch {
-                    print("Failed to save image: \(error.localizedDescription)")
-                }
-                isUploading = false
-            }
-        }
-        .onAppear {
-            loadProfileImage()
-        }
-    }
-
-   
-
-    private func performSignOut() {
-        isSigningOut = true
-        signOutError = nil
-
-        if let action = signOutAction {
-            action()
-            finishSignOut()
-            return
-        }
-
-        do {
-            try Auth.auth().signOut()
-            finishSignOut()
-        } catch {
-            signOutError = error.localizedDescription
-            isSigningOut = false
-        }
-    }
-
-    private func finishSignOut() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            isSigningOut = false
-        }
-    }
-
-
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).getDocument { snapshot, error in
-            if let error = error {
-                print("Error loading profile doc: \(error.localizedDescription)")
-                return
-            }
-
-            guard let data = snapshot?.data(),
-                  let urlString = data["photoURL"] as? String,
-                  let url = URL(string: urlString) else {
-                // no photoURL set yet
-                return
-            }
-
-            URLSession.shared.dataTask(with: url) { data, _, error in
-                if let error = error {
-                    print("Error downloading image: \(error.localizedDescription)")
-                    return
-                }
-
-                if let data = data, let downloadedImage = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.image = downloadedImage
+                
+                // Button Style
+                struct ProfileActionButton: ViewModifier {
+                    func body(content: Content) -> some View {
+                        content
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .cornerRadius(12)
+                        
+                            .padding(.horizontal)
                     }
                 }
-            }.resume()
-        }
-    }
-}
-
-struct ProfileOptions: Identifiable {
-    let id = UUID()
-    var title: String
-    var description: String
-}
+                
+                
+                var body: some View {
+                    NavigationView {
+                        ScrollView {
+                            VStack(spacing: 22) {
+                                
+                                
+                                VStack(spacing: 16) {
+                                    
+                                    Button { shouldShowImagePicker.toggle() } label: {
+                                        VStack {
+                                            if let image = self.image {
+                                                Image(uiImage: image)
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 128, height: 128)
+                                                    .clipShape(Circle())
+                                            } else {
+                                                Image(systemName: "person.fill")
+                                                    .font(.system(size: 64))
+                                                    .padding()
+                                                    .foregroundColor(.gray)
+                                            }
+                                            
+                                            if isUploading {
+                                                ProgressView("Uploading…")
+                                                    .font(.caption)
+                                                    .padding(.top, 4)
+                                            }
+                                        }
+                                    }
+                                    
+                                    Text(authVM.profile?.name ?? "User")
+                                        .font(.title2).fontWeight(.bold)
+                                    
+                                    // AGE DISPLAY
+                                    if let age = calculateAge(from: authVM.profile?.birthday) {
+                                        Text("Age: \(age)")
+                                            .foregroundColor(.secondary)
+                                            .font(.subheadline)
+                                    }
+                                    
+                                    Text(Auth.auth().currentUser?.email ?? "No email")
+                                        .foregroundColor(.secondary)
+                                        .font(.subheadline)
+                                    
+                                    
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(Color(.systemGray6))
+                                        .shadow(color: .black.opacity(0.1), radius: 10, y: 4)
+                                )
+                                .padding(.horizontal)
+                                
+                                
+                                
+                                profileCard(title: "Account", icon: "person.crop.circle") {
+                                    
+                                    Button("Account Details") {
+                                        editedName = authVM.profile?.name ?? ""
+                                        AccountDetailPresented = true
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Rectangle())
+                                    
+                                    Button("Body Stats") {
+                                        preloadStats()
+                                        StatsDetailsPresented = true
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Rectangle())
+                                    
+                                    Button("Change Password") {
+                                        ChangePasscodePresented = true
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Rectangle())
+                                }
+                                
+                                
+                                
+                                
+                                
+                                profileCard(title: "Social", icon: "person.3.fill") {
+                                    
+                                    Button("Manage Friends") {
+                                        manageFriendPresented = true
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Rectangle())
+                                }
+                                
+                                
+                                
+                                
+                                profileCard(title: "Units & Measurements", icon: "ruler") {
+                                    
+                                    Picker("Weight", selection: $apperance) {
+                                        Text("Lbs").tag(ApperanceStyle.lbs)
+                                        Text("Kg").tag(ApperanceStyle.kg)
+                                    }
+                                    
+                                    Picker("Height Units", selection: $apperance2) {
+                                        Text("Inches").tag(ApperanceStyle2.mile)
+                                        Text("Centimeters").tag(ApperanceStyle2.centimeter)
+                                    }
+                                }
+                                
+                                
+                                
+                                
+                                Button {
+                                    showingSignOutConfirm = true
+                                } label: {
+                                    HStack {
+                                        Spacer()
+                                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                                        Text("Sign Out")
+                                        Spacer()
+                                    }
+                                }
+                                .modifier(ProfileActionButton())
+                                
+                            }
+                            .padding(.vertical)
+                        }
+                        .navigationTitle("Profile")
+                    }
+                    
+                    // IMAGE PICKER
+                    .fullScreenCover(isPresented: $shouldShowImagePicker) {
+                        ImagePicker(image: $image)
+                    }
+                    
+                    // LOAD IMAGE
+                    .onAppear { loadProfileImage() }
+                    
+                    // AUTO SAVE UPLOAD
+                    .onChange(of: image) { img in
+                        if let img = img { uploadImage(img) }
+                    }
+                    
+                    
+                    .sheet(isPresented: $AccountDetailPresented) { accountDetailPage }
+                    .sheet(isPresented: $StatsDetailsPresented) { bodyStatsPage }
+                    .sheet(isPresented: $ChangePasscodePresented) { changePasswordPage }
+                    .sheet(isPresented: $manageFriendPresented) { friendsPage }
+                }
+                
+                
+                @ViewBuilder
+                func profileCard<Content: View>(title: String,
+                                                icon: String,
+                                                @ViewBuilder content: () -> Content) -> some View {
+                    VStack(alignment: .leading, spacing: 12) {
+                        
+                        HStack {
+                            Image(systemName: icon)
+                                .foregroundColor(.red)
+                                .font(.title2)
+                            Text(title)
+                                .font(.title3).fontWeight(.semibold)
+                            Spacer()
+                        }
+                        
+                        content()
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(.systemGray6))
+                            .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+                    )
+                    .padding(.horizontal)
+                }
+                
+                // ---------------------------------------------------------
+                // MARK: SHEET PAGES
+                // ---------------------------------------------------------
+                
+                // ACCOUNT DETAILS
+                var accountDetailPage: some View {
+                    NavigationView {
+                        VStack(spacing: 20) {
+                            
+                            headerCard(title: "Update Account Info",
+                                       subtitle: "Modify your personal account information.")
+                            
+                            List {
+                                Section(header: Text("Name")) {
+                                    HStack {
+                                        Image(systemName: "person").foregroundColor(.red)
+                                        TextField("Name", text: $editedName)
+                                    }
+                                }
+                                Section(header: Text("Age")) {
+                                    HStack {
+                                        Image(systemName: "calendar").foregroundColor(.red)
+                                        Text("\(authVM.profile?.age ?? 0) years old")
+                                            .foregroundColor(.primary)
+                                    }
+                                }
+                                
+                                Section(header: Text("Email")) {
+                                    HStack {
+                                        Image(systemName: "envelope").foregroundColor(.red)
+                                        Text(Auth.auth().currentUser?.email ?? "")
+                                    }
+                                }
+                                Section(header: Text("UID")) {
+                                    HStack {
+                                        Image(systemName: "number").foregroundColor(.red)
+                                        Text(Auth.auth().currentUser?.uid ?? "").foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            
+                            Spacer()
+                            
+                            Button("Save Changes") {
+                                Task { await saveUpdatedName() }
+                                AccountDetailPresented = false
+                            }
+                            .modifier(ProfileActionButton())
+                            
+                            Button("Cancel") { AccountDetailPresented = false }
+                                .foregroundColor(.secondary)
+                            
+                            
+                        }
+                        .navigationBarTitleDisplayMode(.inline)
+                        .navigationTitle("Account Details")
+                    }
+                }
+                
+                
+                // BODY STATS PAGE
+                var bodyStatsPage: some View {
+                    NavigationView {
+                        VStack(spacing: 20) {
+                            
+                            headerCard(title: "Update Your Body Stats",
+                                       subtitle: "Keep your height & weight updated.")
+                            
+                            List {
+                                Section(header: Text("Height (\(apperance2 == .mile ? "inches" : "cm"))")) {
+                                    HStack {
+                                        Image(systemName: "ruler").foregroundColor(.red)
+                                        TextField(apperance2 == .mile ? "Inches" : "Centimeters",
+                                                  text: $editedHeight)
+                                        .keyboardType(.decimalPad)
+                                    }
+                                }
+                                Section(header: Text("Weight (\(apperance == .lbs ? "lbs" : "kg"))")) {
+                                    HStack {
+                                        Image(systemName: "scalemass").foregroundColor(.red)
+                                        TextField(apperance == .lbs ? "Pounds" : "Kilograms",
+                                                  text: $editedWeight)
+                                        .keyboardType(.decimalPad)
+                                    }
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            
+                            Spacer()
+                            
+                            Button("Save Body Stats") {
+                                Task { await saveBodyStats() }
+                                StatsDetailsPresented = false
+                            }
+                            .modifier(ProfileActionButton())
+                            
+                            Button("Cancel") { StatsDetailsPresented = false }
+                                .foregroundColor(.secondary)
+                            
+                        }
+                        .navigationBarTitleDisplayMode(.inline)
+                        .navigationTitle("Body Stats")
+                    }
+                }
+                
+                
+                // CHANGE PASSWORD PAGE
+                var changePasswordPage: some View {
+                    NavigationView {
+                        VStack(spacing: 20) {
+                            
+                            headerCard(title: "Change Password",
+                                       subtitle: "Enter your new password.")
+                            
+                            List {
+                                Section(header: Text("New Password")) {
+                                    HStack {
+                                        Image(systemName: "lock.fill").foregroundColor(.red)
+                                        SecureField("New Password", text: $changePswd)
+                                    }
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            
+                            if let error = authVM.errorMessage {
+                                Text(error).foregroundColor(.red)
+                            }
+                            if let info = authVM.infoMessage {
+                                Text(info).foregroundColor(.green)
+                            }
+                            
+                            Spacer()
+                            
+                            Button("Update Password") {
+                                Task {
+                                    await authVM.changePassword(to: changePswd)
+                                    if authVM.errorMessage == nil {
+                                        ChangePasscodePresented = false
+                                        changePswd = ""
+                                    }
+                                }
+                            }
+                            .modifier(ProfileActionButton())
+                            
+                            Button("Cancel") {
+                                ChangePasscodePresented = false
+                            }
+                            .foregroundColor(.secondary)
+                            
+                        }
+                        .navigationBarTitleDisplayMode(.inline)
+                        .navigationTitle("Change Password")
+                    }
+                }
+                
+                
+                // FRIENDS PAGE
+                var friendsPage: some View {
+                    NavigationView {
+                        VStack(spacing: 20) {
+                            
+                            headerCard(title: "Manage yourFriends",
+                                       subtitle: "View your friends list.")
+                            
+                            List {
+                                Section(header: Text("Friends")) {
+                                    Label("Alani", systemImage: "person.fill")
+                                    Label("Andrew", systemImage: "person.fill")
+                                    Label("Doug", systemImage: "person.fill")
+                                    Label("Mathew", systemImage: "person.fill")
+                                    Label("Reni", systemImage: "person.fill")
+                                    Label("Tobi", systemImage: "person.fill")
+                                    Label("Eliceo", systemImage: "person.fill")
+                                }
+                            }
+                            .scrollContentBackground(.hidden)
+                            
+                            Spacer()
+                            
+                            Button("Close") {
+                                manageFriendPresented = false
+                            }
+                            .foregroundColor(.secondary)
+                            
+                        }
+                        .navigationBarTitleDisplayMode(.inline)
+                        .navigationTitle("Friends")
+                    }
+                }
+                
+                
+                // ---------------------------------------------------------
+                // MARK: HELPERS
+                // ---------------------------------------------------------
+                func headerCard(title: String, subtitle: String) -> some View {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(title).font(.title3).fontWeight(.bold)
+                        Text(subtitle).font(.subheadline).foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(.systemGray6))
+                            .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+                    )
+                    .padding(.horizontal)
+                }
+                
+                
+                private func preloadStats() {
+                    let hCm = authVM.profile?.heightCm ?? 0
+                    let wKg = authVM.profile?.weightKg ?? 0
+                    
+                    editedHeight = apperance2 == .mile
+                    ? String(format: "%.1f", hCm / 2.54)
+                    : String(format: "%.0f", hCm)
+                    
+                    editedWeight = apperance == .lbs
+                    ? String(format: "%.1f", wKg * 2.20462)
+                    : String(format: "%.1f", wKg)
+                }
+                
+                
+                // ---------------------------------------------------------
+                // MARK: SAVE FUNCTIONS
+                // ---------------------------------------------------------
+                private func saveUpdatedName() async {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    let db = Firestore.firestore()
+                    
+                    do {
+                        try await db.collection("users").document(uid)
+                            .updateData(["name": editedName])
+                        authVM.profile?.name = editedName
+                    } catch {
+                        print("Name update failed:", error.localizedDescription)
+                    }
+                }
+                
+                
+                private func saveBodyStats() async {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    let db = Firestore.firestore()
+                    
+                    // Convert height
+                    let heightValue = Double(editedHeight) ?? 0
+                    let heightCm = apperance2 == .mile
+                    ? heightValue * 2.54
+                    : heightValue
+                    
+                    // Convert weight
+                    let weightValue = Double(editedWeight) ?? 0
+                    let weightKg = apperance == .lbs
+                    ? weightValue / 2.20462
+                    : weightValue
+                    
+                    do {
+                        try await db.collection("users").document(uid).updateData([
+                            "heightCm": heightCm,
+                            "weightKg": weightKg
+                        ])
+                        authVM.profile?.heightCm = heightCm
+                        authVM.profile?.weightKg = weightKg
+                    } catch {
+                        print("Stats update failed:", error.localizedDescription)
+                    }
+                }
+                
+                
+                // ---------------------------------------------------------
+                // MARK: IMAGE UPLOAD + LOAD
+                // ---------------------------------------------------------
+                private func uploadImage(_ img: UIImage) {
+                    isUploading = true
+                    Task {
+                        do { try await imageService.uploadProfileImage(img) }
+                        catch { print("Image upload error:", error) }
+                        isUploading = false
+                    }
+                }
+                func calculateAge(from birthday: Date?) -> Int? {
+                    guard let birthday = birthday else { return nil }
+                    let now = Date()
+                    let calendar = Calendar.current
+                    let ageComponents = calendar.dateComponents([.year], from: birthday, to: now)
+                    return ageComponents.year
+                }
+                private func loadFriends() {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    
+                    Firestore.firestore()
+                        .collection("users")
+                        .document(uid)
+                        .collection("friends")
+                        .getDocuments { snapshot, error in
+                            if let error = error {
+                                print("Error loading friends:", error)
+                                return
+                            }
+                            
+                            guard let docs = snapshot?.documents else { return }
+                            
+                            self.friends = docs.compactMap { doc in
+                                let data = doc.data()
+                                guard let name = data["name"] as? String else { return nil }
+                                return Friend(id: doc.documentID, name: name)
+                            }
+                        }
+                }
+                
+                private func addFriend() {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    let trimmed = newFriendName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    
+                    let friend = Friend(id: UUID().uuidString, name: trimmed)
+                    
+                    Firestore.firestore()
+                        .collection("users")
+                        .document(uid)
+                        .collection("friends")
+                        .document(friend.id)
+                        .setData(["name": friend.name]) { error in
+                            if let error = error {
+                                print("Error adding friend:", error)
+                                return
+                            }
+                            // Update local UI list
+                            self.friends.append(friend)
+                            self.newFriendName = ""
+                        }
+                }
+                
+                private func deleteFriend(at offsets: IndexSet) {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    
+                    offsets.forEach { index in
+                        let friend = friends[index]
+                        
+                        Firestore.firestore()
+                            .collection("users")
+                            .document(uid)
+                            .collection("friends")
+                            .document(friend.id)
+                            .delete { error in
+                                if let error = error {
+                                    print("Error deleting friend:", error)
+                                }
+                            }
+                        
+                        friends.remove(at: index)
+                    }
+                }
+                
+                
+                
+                private func loadProfileImage() {
+                    guard let uid = Auth.auth().currentUser?.uid else { return }
+                    
+                    Firestore.firestore().collection("users").document(uid)
+                        .getDocument { snapshot, _ in
+                            guard let data = snapshot?.data(),
+                                  let urlString = data["photoURL"] as? String,
+                                  let url = URL(string: urlString)
+                            else { return }
+                            
+                            URLSession.shared.dataTask(with: url) { data, _, _ in
+                                if let data = data, let img = UIImage(data: data) {
+                                    DispatchQueue.main.async { self.image = img }
+                                }
+                            }.resume()
+                        }
+                }
+            }
+            func saveWeightEntry(newWeight: Double) async throws {
+                guard let uid = Auth.auth().currentUser?.uid else { return }
+                
+                let entry = WeightEntry(
+                    id: UUID().uuidString,
+                    weight: newWeight,
+                    date: Date()
+                )
+                
+                try await Firestore.firestore()
+                    .collection("users")
+                    .document(uid)
+                    .collection("weightHistory")
+                    .document(entry.id)
+                    .setData([
+                        "weight": entry.weight,
+                        "date": entry.date
+                    ])
+            }
+        

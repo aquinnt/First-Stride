@@ -9,6 +9,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 
+
 // workoput model with all neccesarry field
 struct Workout: Identifiable {
     var id: String = UUID().uuidString //created firebase id for storing
@@ -44,7 +45,27 @@ struct Routine: Identifiable {
     var numexercises: Int
 }
 
+struct WeightEntry: Identifiable {
+    let id: String
+    let weight: Double
+    let date: Date
+}
+
+func addWeightEntry(_ entry: WeightEntry, for uid: String) async throws {
+    try await Firestore.firestore()
+        .collection("users")
+        .document(uid)
+        .collection("weightHistory")
+        .document(entry.id)
+        .setData([
+            "weight": entry.weight,
+            "date": entry.date
+        ])
+}
+
+
 final class FirestoreService {
+    
     //reference to firestore
     private let db = Firestore.firestore()
 

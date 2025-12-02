@@ -7,6 +7,17 @@ import SwiftUI
 import Combine
 import FirebaseAuth
 import FirebaseFirestore
+let motivations = [
+    "Let’s crush it today!",
+    "Small steps lead to big results.",
+    "You’re stronger than you think.",
+    "One workout at a time.",
+    "Progress, not perfection.",
+    "Consistency beats intensity.",
+    "Your future self will thank you."
+]
+let message = motivations.randomElement()!
+
 
 struct DashboardView: View {
     // Calendar + date state
@@ -27,21 +38,93 @@ struct DashboardView: View {
 
     // App lifecycle
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject var auth: AuthViewModel
+
 
     // ---- Config: adjust if your schema differs ----
     private let workoutsCollectionID = "workouts"   // top-level collection (matches WorkoutsView)
     private let userIdField = "userId"              // field containing the owner's uid
     private let dateField = "date"                  // field that stores the workout time (Firestore Timestamp)
     private let enableDebugLogging = true          // set true to see prints in Xcode console
-    // ----------------------------------------------
+
 
     var body: some View {
-        VStack(spacing: 12) {
-            header
-            calendarGrid
-            Spacer(minLength: 0)
+        VStack(spacing: 60) {
+            
+            // Custom Title
+            VStack(alignment: .leading, spacing: 8) {
+                // User name
+                ZStack {
+                    // Background Image
+                    Image("Legs")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 180)
+                        .clipped()
+                        .cornerRadius(20)
+                        .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
+
+                    // Dark overlay to improve readability
+                    Rectangle()
+                        .fill(Color.black.opacity(0.25))
+                        .cornerRadius(20)
+
+                    // Foreground Content
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Welcome back, \(auth.profile?.name ?? "Athlete")")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .shadow(radius: 4)
+
+                        Text(message)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.9))
+                            .shadow(radius: 2)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(.top, 40)
+                // Motivational message
+       
+            }
+           
+            .padding(.top, 40)
+
+            .frame(maxWidth: .infinity, alignment: .center)
+
+            // MARK: – Unified Calendar Section
+            VStack(spacing: 12) {
+
+                // Month Header
+                header
+
+                // Calendar (weekday row + days)
+                calendarGrid
+
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(.systemGray5),
+                                Color.red.opacity(0.07)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+
+                    )
+                    .shadow(color: Color.black.opacity(0.12), radius: 8, y: 4)
+            )
+            .padding(.horizontal, 6)
+
+            Spacer()
         }
-        .padding()
+        .padding(.horizontal)
 
         // Load once view appears (will be a no-op if user isn't ready; listener below covers that)
         .onAppear {
@@ -95,16 +178,34 @@ private extension DashboardView {
     var header: some View {
         HStack {
             Button { shiftMonth(by: -1) } label: {
-                Image(systemName: "chevron.left").font(.headline)
+                Image(systemName: "chevron.left")
+                    .font(.headline)
+                    .padding(8)
+                    .background(
+                        Circle().fill(Color(.systemGray5))
+                    )
             }
+
             Spacer()
+
             Text(monthTitle(for: displayDate))
-                .font(.headline)
+                .font(.title3)
+                .fontWeight(.semibold)
+                .padding(.horizontal, 8)
+
             Spacer()
+
             Button { shiftMonth(by: 1) } label: {
-                Image(systemName: "chevron.right").font(.headline)
+                Image(systemName: "chevron.right")
+                    .font(.headline)
+                    .padding(8)
+                    .background(
+                        Circle().fill(Color(.systemGray5))
+                    )
             }
         }
+        .padding(.top, -10)
+        .padding(.bottom, 10)
     }
 
     var weekdayRow: some View {

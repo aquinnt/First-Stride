@@ -34,7 +34,7 @@ struct AppShell: View {
         TabView(selection: $current) {
             NavigationStack {
                 DashboardView()
-                    .navigationTitle(AppPage.dashboard.rawValue)
+                    .navigationBarHidden(true)
             }
             .tabItem {
                 Image(systemName: AppPage.dashboard.icon)
@@ -84,6 +84,6 @@ struct AppShell: View {
             }
             .tag(AppPage.resources)
         }
-        .accentColor(.primary)
+        .tint(.red)
     }
 }
