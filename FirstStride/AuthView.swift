@@ -63,7 +63,7 @@ struct AuthView: View {
                         
                         //error/info messages
                         if let msg = auth.errorMessage {
-                            Text(msg).foregroundColor(.red).font(.footnote)
+                            Text(msg).foregroundColor(.white).font(.footnote)
                         }
                         if let info = auth.infoMessage {
                             Text(info).foregroundStyle(.secondary).font(.footnote)

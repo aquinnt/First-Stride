@@ -9,6 +9,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 
+
 // workoput model with all neccesarry field
 struct Workout: Identifiable {
     var id: String = UUID().uuidString //created firebase id for storing
@@ -45,6 +46,7 @@ struct Routine: Identifiable {
 }
 
 final class FirestoreService {
+    
     //reference to firestore
     private let db = Firestore.firestore()
 

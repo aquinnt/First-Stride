@@ -7,6 +7,41 @@
 import SwiftUI
 import FirebaseAuth
 
+// Reusable card style (matches profileCard)
+@ViewBuilder
+func workoutCardContainer<Content: View>(
+    title: String,
+    icon: String,
+    @ViewBuilder content: () -> Content
+) -> some View {
+
+    VStack(alignment: .leading, spacing: 12) {
+
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.red)
+                .font(.title2)
+
+            Text(title)
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Spacer()
+        }
+
+        content()
+    }
+    .padding()
+    .frame(maxWidth: .infinity)
+    .background(
+        RoundedRectangle(cornerRadius: 20)
+            .fill(Color(.systemGray6))
+            .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+    )
+    .padding(.horizontal)
+}
+
+
 struct WorkoutsView: View {
     @State private var status = ""
     @State private var workouts: [Workout] = []
@@ -25,107 +60,104 @@ struct WorkoutsView: View {
         //Workout adding menu - Brvnson
         VStack(spacing: 12) {
             //Opens Menu for adding routines - Brvnson
-            NavigationView {
-                NavigationLink(destination: RoutinePopup()){
-                    Text("Routines")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(5)
-        }
-            Button("Add") {
-                Task {
-                    guard let uid = Auth.auth().currentUser?.uid else { return }
-                    let w = Workout(userId: uid, date: .now, type: wrk, durationMinutes: dur, distanceKm: dist, timed: tw, weightLbs: wgt)
-                    do {
-                        try await store.addWorkout(w)
-                        status = "Saved!"
-                        try await load()
-                    } catch {
-                        status = "Error: \(error.localizedDescription)"
-                    }
+            // Routines Button (clean + styled)
+            ScrollView {
+                VStack(spacing: 24) {
                     
-                }
-                
-            }
-            
-            Toggle("Timed Workout?", systemImage: "clock", isOn: $tw)
-            
-            TextField("Workout", text: $wrk)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            HStack{
-                VStack{
-                    TextField("Duration/Sets", value: $dur, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                    if tw == true{
-                        Text("Duration (min)")
-                    }
-                    else{
-                        Text("Sets")
-                    }
-                }
-                VStack{
-                    TextField("Distance/Reps", value: $dist, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                    if tw == true{
-                        Text("Distance (km)")
-                    }
-                    else{
-                        Text("Reps")
-                    }
-                }
-                VStack{
-                    TextField("Weight (lbs)", value: $wgt, format: .number)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                    Text("Weight (lbs)")
-                    
-                }
-                
-            }
-
-            
-            
-            
-            
-            
-            
-            
-            Text(status).font(.footnote).foregroundStyle(.secondary)
-            
-            List(workouts) { w in
-                VStack(alignment: .leading) {
-                    if Calendar.current.isDateInToday(w.date) {
+                    // --- Routines Button Card ---
+                    workoutCardContainer(title: "Routines", icon: "list.bullet.rectangle") {
                         
-                        if w.timed == true{
-                            Text("\(w.type) • \(w.durationMinutes) min")
-                                .font(.headline)
-                        }
-                        else{
-                            Text("\(w.type) • \(w.durationMinutes) Sets")
-                                .font(.headline)
-                        }
-                        if let d = w.distanceKm {
-                            if w.timed == true{
-                                Text("\(String(format: "%.2f", d)) km").font(.subheadline)
+                        NavigationLink(destination: RoutinePopup()) {
+                            HStack {
+                                Label("Open Routines", systemImage: "arrow.right.circle")
+                                Spacer()
                             }
-                            else{
-                                Text("\(String(format: "%.2f", d)) Reps").font(.subheadline)
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    
+                    // --- Add Workout Card ---
+                    workoutCardContainer(title: "Add Workout", icon: "plus.circle.fill") {
+                        
+                        Toggle("Timed Workout?", isOn: $tw)
+                            .padding(.bottom, 8)
+                        
+                        TextField("Workout Type", text: $wrk)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        
+                        HStack {
+                            VStack(alignment: .leading) {
+                                TextField("Duration / Sets", value: $dur, format: .number)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                Text(tw ? "Duration (min)" : "Sets")
+                                    .font(.caption)
+                            }
+                            
+                            VStack(alignment: .leading) {
+                                TextField("Distance / Reps", value: $dist, format: .number)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                Text(tw ? "Distance (km)" : "Reps")
+                                    .font(.caption)
+                            }
+                            
+                            VStack(alignment: .leading) {
+                                TextField("Weight (lbs)", value: $wgt, format: .number)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                Text("Weight")
+                                    .font(.caption)
                             }
                         }
-                        if let d = w.weightLbs {
-                            Text("\(String(format: "%.2f", d)) Lbs").font(.subheadline)
+                        
+                        Button {
+                            Task {
+                                guard let uid = Auth.auth().currentUser?.uid else { return }
+                                let w = Workout(
+                                    userId: uid,
+                                    date: .now,
+                                    type: wrk,
+                                    durationMinutes: dur,
+                                    distanceKm: dist,
+                                    timed: tw,
+                                    weightLbs: wgt
+                                )
+                                do {
+                                    try await store.addWorkout(w)
+                                    status = "Saved!"
+                                    try await load()
+                                } catch {
+                                    status = "Error: \(error.localizedDescription)"
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Label("Save Workout", systemImage: "checkmark.circle.fill")
+                                Spacer()
+                            }
                         }
-                        Text(w.date.formatted(date: .abbreviated, time: .shortened))
-                            .font(.caption).foregroundStyle(.secondary)
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
+                        .padding(.top, 8)
+                        
+                        Text(status)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // --- Today's Workouts ---
+                    workoutCardContainer(title: "Today's Workouts", icon: "clock") {
+                        ForEach(workouts) { w in
+                            if Calendar.current.isDateInToday(w.date) {
+                                WorkoutCard(workout: w)
+                                Divider()
+                            }
+                        }
                     }
                 }
+                .padding(.top, 18)  // Raises everything downward
             }
-        }
+            .task { try? await load() }}
+
         .padding()
         .task { try? await load() }
     }
@@ -155,13 +187,13 @@ struct WorkoutsView: View {
         
         var body: some View{
             ZStack{
-                Color.red
-                    .edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 12){
+               
+                VStack(alignment: .leading, spacing: 20){
                     
-                    Text("DESIGN YOUR ROUTINE")
-                    
+                    Text("Design Your Routine")
+                        .font(.title2)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .center)
                     Text("Name of Routine (e.g. Back Day)")
                     TextField("Name", text: $rtn)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -289,3 +321,71 @@ struct WorkoutsView: View {
     
 }
 
+struct WorkoutCard: View {
+    let workout: Workout
+
+    var icon: String {
+        if workout.type.lowercased().contains("run") { return "figure.run" }
+        if workout.type.lowercased().contains("lift") { return "dumbbell" }
+        if workout.timed == true { return "clock" }
+        return "flame"
+    }
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon Circle
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                Image(systemName: icon)
+                    .font(.title)
+                    .foregroundColor(.blue)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(workout.type)
+                    .font(.headline)
+
+                if workout.timed == true {
+                    Text("⏱ \(workout.durationMinutes) min")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    if let d = workout.distanceKm {
+                        Text("📍 \(String(format: "%.2f", d)) km")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text("Sets: \(workout.durationMinutes)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    if let r = workout.distanceKm {
+                        Text("Reps: \(String(format: "%.0f", r))")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                if let w = workout.weightLbs {
+                    Text("🏋️‍♂️ \(String(format: "%.1f", w)) lbs")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Text(workout.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground).opacity(0.9))
+        )
+    }
+}

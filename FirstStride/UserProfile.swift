@@ -11,10 +11,12 @@ import Foundation
 struct UserProfile: Codable, Equatable, Sendable{
     var uid: String //firebase auth id
     var name: String //display name
-    var age: Int? // optional age, can edit later
+    var age: Int// optional age, can edit later
     var weightKg: Double? // same as age
     var heightCm: Double? //same as age
     var email: String? //comes from firebase auth
     var createdAt: Date
     var updatedAt: Date
+    let birthday: Date?
+
 }
