@@ -228,6 +228,14 @@ struct ProfileView: View {
         .sheet(isPresented: $StatsDetailsPresented) { bodyStatsPage }
         .sheet(isPresented: $ChangePasscodePresented) { changePasswordPage }
         .sheet(isPresented: $manageFriendPresented) { friendsPage }
+        
+        .alert("Sign Out?", isPresented: $showingSignOutConfirm) {
+            Button("Sign Out", role: .destructive) {
+                authVM.signOut()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+
     }
 
     
@@ -258,9 +266,7 @@ struct ProfileView: View {
         .padding(.horizontal)
     }
 
-    // ---------------------------------------------------------
-    // MARK: SHEET PAGES
-    // ---------------------------------------------------------
+
 
     // ACCOUNT DETAILS
     var accountDetailPage: some View {
@@ -450,9 +456,6 @@ struct ProfileView: View {
     }
 
 
-    // ---------------------------------------------------------
-    // MARK: HELPERS
-    // ---------------------------------------------------------
     func headerCard(title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.title3).fontWeight(.bold)
@@ -482,9 +485,7 @@ struct ProfileView: View {
     }
 
 
-    // ---------------------------------------------------------
-    // MARK: SAVE FUNCTIONS
-    // ---------------------------------------------------------
+    
     private func saveUpdatedName() async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
@@ -528,9 +529,7 @@ struct ProfileView: View {
     }
 
 
-    // ---------------------------------------------------------
-    // MARK: IMAGE UPLOAD + LOAD
-    // ---------------------------------------------------------
+    
     private func uploadImage(_ img: UIImage) {
         isUploading = true
         Task {
