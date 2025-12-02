@@ -228,6 +228,14 @@ struct ProfileView: View {
         .sheet(isPresented: $StatsDetailsPresented) { bodyStatsPage }
         .sheet(isPresented: $ChangePasscodePresented) { changePasswordPage }
         .sheet(isPresented: $manageFriendPresented) { friendsPage }
+        
+        .alert("Sign Out?", isPresented: $showingSignOutConfirm) {
+            Button("Sign Out", role: .destructive) {
+                authVM.signOut()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+
     }
 
     
