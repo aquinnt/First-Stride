@@ -542,11 +542,11 @@ struct ProfileView: View {
                     .padding(.horizontal)
                 }
                 
-<<<<<<< HEAD
+//<<<<<<< HEAD
                 // ---------------------------------------------------------
                 // MARK: SHEET PAGES
                 // ---------------------------------------------------------
-=======
+//=======
                     profileCard(title: "Social", icon: "person.3.fill") {
 
                         Button("Manage Friends") {
