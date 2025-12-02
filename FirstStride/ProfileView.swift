@@ -542,9 +542,164 @@ struct ProfileView: View {
                     .padding(.horizontal)
                 }
                 
+<<<<<<< HEAD
                 // ---------------------------------------------------------
                 // MARK: SHEET PAGES
                 // ---------------------------------------------------------
+=======
+                    profileCard(title: "Social", icon: "person.3.fill") {
+
+                        Button("Manage Friends") {
+                            manageFriendPresented = true
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                    }
+
+
+
+                    
+                    profileCard(title: "Units & Measurements", icon: "ruler") {
+
+                        Picker("Weight", selection: $apperance) {
+                            Text("Lbs").tag(ApperanceStyle.lbs)
+                            Text("Kg").tag(ApperanceStyle.kg)
+                        }
+
+                        Picker("Height Units", selection: $apperance2) {
+                            Text("Inches").tag(ApperanceStyle2.mile)
+                            Text("Centimeters").tag(ApperanceStyle2.centimeter)
+                        }
+                    }
+
+
+
+                    
+                    Button {
+                        showingSignOutConfirm = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("Sign Out")
+                            Spacer()
+                        }
+                    }
+                    .modifier(ProfileActionButton())
+
+                }
+                .padding(.vertical)
+            }
+                        .navigationTitle("Profile")
+        }
+
+        // IMAGE PICKER
+        .fullScreenCover(isPresented: $shouldShowImagePicker) {
+            ImagePicker(image: $image)
+        }
+
+        // LOAD IMAGE
+        .onAppear { loadProfileImage() }
+
+        // AUTO SAVE UPLOAD
+        .onChange(of: image) { img in
+            if let img = img { uploadImage(img) }
+        }
+
+        
+        .sheet(isPresented: $AccountDetailPresented) { accountDetailPage }
+        .sheet(isPresented: $StatsDetailsPresented) { bodyStatsPage }
+        .sheet(isPresented: $ChangePasscodePresented) { changePasswordPage }
+        .sheet(isPresented: $manageFriendPresented) { friendsPage }
+        
+        .alert("Sign Out?", isPresented: $showingSignOutConfirm) {
+            Button("Sign Out", role: .destructive) {
+                authVM.signOut()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+
+    }
+
+    
+    @ViewBuilder
+    func profileCard<Content: View>(title: String,
+                                    icon: String,
+                                    @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.red)
+                    .font(.title2)
+                Text(title)
+                    .font(.title3).fontWeight(.semibold)
+                Spacer()
+            }
+
+            content()
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+                .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+        )
+        .padding(.horizontal)
+    }
+
+
+
+    // ACCOUNT DETAILS
+    var accountDetailPage: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+
+                headerCard(title: "Update Account Info",
+                           subtitle: "Modify your personal account information.")
+
+                List {
+                    Section(header: Text("Name")) {
+                        HStack {
+                            Image(systemName: "person").foregroundColor(.red)
+                            TextField("Name", text: $editedName)
+                        }
+                    }
+                    Section(header: Text("Age")) {
+                        HStack {
+                            Image(systemName: "calendar").foregroundColor(.red)
+                            Text("\(authVM.profile?.age ?? 0) years old")
+                                .foregroundColor(.primary)
+                        }
+                    }
+
+                    Section(header: Text("Email")) {
+                        HStack {
+                            Image(systemName: "envelope").foregroundColor(.red)
+                            Text(Auth.auth().currentUser?.email ?? "")
+                        }
+                    }
+                    Section(header: Text("UID")) {
+                        HStack {
+                            Image(systemName: "number").foregroundColor(.red)
+                            Text(Auth.auth().currentUser?.uid ?? "").foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .scrollContentBackground(.hidden)
+
+                Spacer()
+
+                Button("Save Changes") {
+                    Task { await saveUpdatedName() }
+                    AccountDetailPresented = false
+                }
+                .modifier(ProfileActionButton())
+
+                Button("Cancel") { AccountDetailPresented = false }
+                    .foregroundColor(.secondary)
+>>>>>>> 7cc2357ceb6453a83666b956c41b66354275a2fd
                 
                 // ACCOUNT DETAILS
                 var accountDetailPage: some View {
@@ -896,6 +1051,7 @@ struct ProfileView: View {
                         friends.remove(at: index)
                     }
                 }
+<<<<<<< HEAD
                 
                 
                 
@@ -915,6 +1071,165 @@ struct ProfileView: View {
                                 }
                             }.resume()
                         }
+=======
+                .modifier(ProfileActionButton())
+
+                Button("Cancel") {
+                    ChangePasscodePresented = false
+                }
+                .foregroundColor(.secondary)
+
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Change Password")
+        }
+    }
+
+
+    // FRIENDS PAGE
+    var friendsPage: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+
+                headerCard(title: "Manage yourFriends",
+                           subtitle: "View your friends list.")
+
+                List {
+                    Section(header: Text("Friends")) {
+                        Label("Alani", systemImage: "person.fill")
+                        Label("Andrew", systemImage: "person.fill")
+                        Label("Doug", systemImage: "person.fill")
+                        Label("Mathew", systemImage: "person.fill")
+                        Label("Reni", systemImage: "person.fill")
+                        Label("Tobi", systemImage: "person.fill")
+                        Label("Eliceo", systemImage: "person.fill")
+                    }
+                }
+                .scrollContentBackground(.hidden)
+
+                Spacer()
+
+                Button("Close") {
+                    manageFriendPresented = false
+                }
+                .foregroundColor(.secondary)
+
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Friends")
+        }
+    }
+
+
+    func headerCard(title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.title3).fontWeight(.bold)
+            Text(subtitle).font(.subheadline).foregroundColor(.secondary)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+                .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+        )
+        .padding(.horizontal)
+    }
+
+
+    private func preloadStats() {
+        let hCm = authVM.profile?.heightCm ?? 0
+        let wKg = authVM.profile?.weightKg ?? 0
+
+        editedHeight = apperance2 == .mile
+            ? String(format: "%.1f", hCm / 2.54)
+            : String(format: "%.0f", hCm)
+
+        editedWeight = apperance == .lbs
+            ? String(format: "%.1f", wKg * 2.20462)
+            : String(format: "%.1f", wKg)
+    }
+
+
+    
+    private func saveUpdatedName() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+
+        do {
+            try await db.collection("users").document(uid)
+                .updateData(["name": editedName])
+            authVM.profile?.name = editedName
+        } catch {
+            print("Name update failed:", error.localizedDescription)
+        }
+    }
+
+
+    private func saveBodyStats() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+
+        // Convert height
+        let heightValue = Double(editedHeight) ?? 0
+        let heightCm = apperance2 == .mile
+            ? heightValue * 2.54
+            : heightValue
+
+        // Convert weight
+        let weightValue = Double(editedWeight) ?? 0
+        let weightKg = apperance == .lbs
+            ? weightValue / 2.20462
+            : weightValue
+
+        do {
+            try await db.collection("users").document(uid).updateData([
+                "heightCm": heightCm,
+                "weightKg": weightKg
+            ])
+            authVM.profile?.heightCm = heightCm
+            authVM.profile?.weightKg = weightKg
+        } catch {
+            print("Stats update failed:", error.localizedDescription)
+        }
+    }
+
+
+    
+    private func uploadImage(_ img: UIImage) {
+        isUploading = true
+        Task {
+            do { try await imageService.uploadProfileImage(img) }
+            catch { print("Image upload error:", error) }
+            isUploading = false
+        }
+    }
+    func calculateAge(from birthday: Date?) -> Int? {
+        guard let birthday = birthday else { return nil }
+        let now = Date()
+        let calendar = Calendar.current
+        let ageComponents = calendar.dateComponents([.year], from: birthday, to: now)
+        return ageComponents.year
+    }
+    private func loadFriends() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .collection("friends")
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error loading friends:", error)
+                    return
+                }
+
+                guard let docs = snapshot?.documents else { return }
+
+                self.friends = docs.compactMap { doc in
+                    let data = doc.data()
+                    guard let name = data["name"] as? String else { return nil }
+                    return Friend(id: doc.documentID, name: name)
+>>>>>>> 7cc2357ceb6453a83666b956c41b66354275a2fd
                 }
             }
             func saveWeightEntry(newWeight: Double) async throws {
