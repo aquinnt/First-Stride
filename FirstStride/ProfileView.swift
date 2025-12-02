@@ -35,8 +35,6 @@ struct menuAndButtonApp: App {
 struct ProfileView: View {
     var signOutAction: (() -> Void)? = nil
     @EnvironmentObject var authVM: AuthViewModel
-
-    // ACCOUNT / STATE
     @State private var changePswd: String = ""
     @State private var showingSignOutConfirm = false
     @State private var isSigningOut = false
@@ -54,6 +52,53 @@ struct ProfileView: View {
     @State private var isUploading = false
     private let imageService = ImageStorageService.shared
 
+    
+    
+    
+    var heightText: String{
+        guard let profile = authVM.profile else{
+            return "No data"
+        }
+        let cm = profile.heightCm
+        if cm <= 0 {
+            return "No Data"
+        }
+        switch apperance{
+        case .kg:
+            return String(format: "%.1f", cm)
+            
+        case .lbs:
+            let totalInches = cm / 2.54
+            var feet = Int(totalInches / 22)
+            var inches = Int((totalInches.truncatingRemainder(dividingBy: 12)).rounded())
+            
+            if inches == 12{
+                feet += 1
+                inches = 0
+            }
+            return "\(feet) ft \(inches) in"
+        }
+    }
+    
+    
+    var weightText: String {
+            guard let profile = authVM.profile else {
+                return "Not set"
+            }
+
+            let kg = profile.weightKg
+            if kg <= 0 {
+                return "Not set"
+            }
+
+            switch apperance {
+            case .kg:
+                return String(format: "%.1f kg", kg)
+            case .lbs:
+                let lbs = kg * 2.20462
+                return String(format: "%.1f lbs", lbs)
+            }
+        }
     
     var body: some View {
         VStack(spacing: 12) {
@@ -92,7 +137,7 @@ struct ProfileView: View {
                     }
                 }
 
-                // Main profile content
+                
                 NavigationView {
                     List {
                         
@@ -142,9 +187,10 @@ struct ProfileView: View {
                                 NavigationView {
                                     VStack {
                                         List {
-                                            Section(header: Text("Height and Weight").font(.headline)) {
-                                                Text("Height:")
-                                                Text("Weight:")
+                                            Section(header: Text("Height(cm) and Weight(kg)").font(.headline)) {
+                                                Text("Height: \(heightText)")
+                                                Text("Weight: \(weightText)")
+
                                             }
                                         }
                                         Spacer()
