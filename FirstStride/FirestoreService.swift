@@ -45,6 +45,25 @@ struct Routine: Identifiable {
     var numexercises: Int
 }
 
+struct WeightEntry: Identifiable {
+    let id: String
+    let weight: Double
+    let date: Date
+}
+
+func addWeightEntry(_ entry: WeightEntry, for uid: String) async throws {
+    try await Firestore.firestore()
+        .collection("users")
+        .document(uid)
+        .collection("weightHistory")
+        .document(entry.id)
+        .setData([
+            "weight": entry.weight,
+            "date": entry.date
+        ])
+}
+
+
 final class FirestoreService {
     
     //reference to firestore
