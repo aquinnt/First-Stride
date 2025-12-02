@@ -11,6 +11,9 @@ import Foundation
 struct UserProfile: Codable, Equatable, Sendable{
     var uid: String //firebase auth id
     var name: String //display name
+    var age: Int? // optional age, can edit later
+    var weightKg: Double // same as age
+    var heightCm: Double //same as age
     var age: Int// optional age, can edit later
     var weightKg: Double? // same as age
     var heightCm: Double? //same as age

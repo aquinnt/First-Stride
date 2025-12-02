@@ -6,7 +6,6 @@ import SwiftUI
 @MainActor
 final class AuthViewModel: ObservableObject {
 
-    // MARK: - Published Properties
     @Published var user: User? = nil                   // Firebase auth user
     @Published var profile: UserProfile? = nil         // Firestore profile
 
@@ -30,7 +29,6 @@ final class AuthViewModel: ObservableObject {
     private var handle: AuthStateDidChangeListenerHandle?
     private let store = FirestoreService()
 
-    // MARK: - Init
     init() {
         handle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
@@ -52,7 +50,6 @@ final class AuthViewModel: ObservableObject {
         if let handle { Auth.auth().removeStateDidChangeListener(handle) }
     }
 
-    // MARK: - Sign Up
     func signUpWithProfile() async {
         errorMessage = nil
         infoMessage = nil
@@ -106,7 +103,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Login
     func signIn() async {
         errorMessage = nil
         infoMessage = nil
@@ -117,7 +113,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Anonymous Login
     func signInAnonymously() async {
         errorMessage = nil
         infoMessage = nil
@@ -128,7 +123,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Password Reset Email
     func sendPasswordReset(email: String) async {
         errorMessage = nil
         infoMessage = nil
@@ -140,7 +134,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Change Password  🔹 (Your New Feature)
     func changePassword(to newPassword: String) async {
         errorMessage = nil
         infoMessage = nil
@@ -158,7 +151,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Sign Out
     func signOut() {
         try? Auth.auth().signOut()
         user = nil
